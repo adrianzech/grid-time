@@ -4,9 +4,25 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    operations: [new Get(), new GetCollection()],
+    normalizationContext: ['groups' => ['session:read']],
+)]
+#[ApiFilter(SearchFilter::class, properties: ['event.season.series.code' => 'exact', 'event.season.year' => 'exact', 'event.roundNumber' => 'exact'])]
+#[ApiFilter(DateFilter::class, properties: ['startsAt'])]
+#[ApiFilter(OrderFilter::class, properties: ['startsAt'])]
 #[ORM\Entity]
 #[ORM\Table(name: 'race_session')]
 #[ORM\UniqueConstraint(name: 'uniq_session_event_name', columns: ['event_id', 'name'])]
@@ -15,19 +31,26 @@ class Session
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['session:read'])]
     private int $id;
 
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Event::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+        #[ApiProperty(readableLink: false)]
+        #[Groups(['session:read'])]
         private Event $event,
         #[ORM\Column(length: 64)]
+        #[Groups(['session:read'])]
         private string $name,
         #[ORM\Column]
+        #[Groups(['session:read'])]
         private DateTimeImmutable $startsAt,
         #[ORM\Column(nullable: true)]
+        #[Groups(['session:read'])]
         private ?DateTimeImmutable $endsAt,
         #[ORM\Column(length: 512)]
+        #[Groups(['session:read'])]
         private string $sourceUrl,
     ) {
     }
