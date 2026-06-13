@@ -15,7 +15,7 @@ parameters:
         containerXmlPath: '%currentWorkingDirectory%/var/cache/dev/App_KernelDevDebugContainer.xml'
 
         # Optional: If you want PHPStan to analyze console commands loaded via bin/console
-        consoleApplicationLoader: '%currentWorkingDirectory%/bin/console'
+        consoleApplicationLoader: '%currentWorkingDirectory%/tests/phpstan/console-application.php'
 
     # --- Exclusions ---
     # Paths to ignore (e.g., auto-generated files, specific legacy code)

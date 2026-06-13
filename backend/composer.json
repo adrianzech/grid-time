@@ -85,7 +85,7 @@
             "@php vendor/bin/phpmd analyze src/ --format=text --ruleset=phpmd.xml.dist"
         ],
         "phpstan": [
-            "@php vendor/bin/phpstan analyse -c phpstan.dist.neon --memory-limit=1G"
+            "@php vendor/bin/phpstan analyse -c phpstan.dist.neon --memory-limit=1G --debug"
         ],
         "tests": [
             "@php vendor/bin/phpunit"
