@@ -33,7 +33,7 @@ class Series
     public function __construct(
         #[ORM\Column(length: 32)]
         #[Groups(['series:read', 'season:read'])]
-        private string $code,
+        private readonly string $code,
         #[ORM\Column(length: 128)]
         #[Groups(['series:read', 'season:read'])]
         private string $name,

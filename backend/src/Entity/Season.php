@@ -36,10 +36,10 @@ class Season
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
         #[ApiProperty(readableLink: false)]
         #[Groups(['season:read'])]
-        private Series $series,
+        private readonly Series $series,
         #[ORM\Column]
         #[Groups(['season:read', 'event:read'])]
-        private int $year,
+        private readonly int $year,
         #[ORM\Column(length: 128)]
         #[Groups(['season:read', 'event:read'])]
         private string $name,

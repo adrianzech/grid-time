@@ -39,10 +39,10 @@ class Session
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
         #[ApiProperty(readableLink: false)]
         #[Groups(['session:read'])]
-        private Event $event,
+        private readonly Event $event,
         #[ORM\Column(length: 64)]
         #[Groups(['session:read'])]
-        private string $name,
+        private readonly string $name,
         #[ORM\Column]
         #[Groups(['session:read'])]
         private DateTimeImmutable $startsAt,
