@@ -6,7 +6,6 @@
       <header class="flex flex-col gap-5 border-b border-white/10 py-5 md:flex-row md:items-end md:justify-between">
         <div class="space-y-3">
           <div class="flex items-center gap-3">
-            <span class="h-3 w-10 bg-race-red" />
             <span class="text-xs font-semibold uppercase tracking-[0.26em] text-race-red">Grid Time</span>
           </div>
           <div>
@@ -47,29 +46,44 @@
         </div>
       </header>
 
-      <section class="grid gap-4 py-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div class="rounded-lg border border-white/10 bg-panel shadow-2xl shadow-black/20">
-          <div class="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 class="text-lg font-bold text-white">
-                Sessions
+      <section class="py-5">
+        <section class="mb-4 rounded-lg border border-race-red/25 bg-race-red/10 p-4 shadow-2xl shadow-race-red/10 sm:p-5">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div class="min-w-0">
+              <p class="text-xs font-bold uppercase tracking-[0.22em] text-race-red">
+                Next up
+              </p>
+              <h2
+                class="mt-3 max-w-3xl text-2xl font-black text-white sm:text-3xl"
+                :title="nextSessionEvent?.name"
+              >
+                {{ nextSessionEvent ? formatEventTitle(nextSessionEvent) : 'No upcoming session' }}
               </h2>
-              <p class="text-sm text-zinc-500">
-                {{ timezoneLabel }}
+              <p class="mt-3 text-xl font-black text-white sm:text-2xl">
+                {{ nextSession?.name ?? 'Schedule unavailable' }}
               </p>
             </div>
 
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="option in filters"
-                :key="option.value"
-                type="button"
-                class="rounded-md px-3 py-2 text-sm font-semibold transition"
-                :class="selectedFilter === option.value ? 'bg-race-red text-white shadow-lg shadow-race-red/25' : 'bg-white/5 text-zinc-300 hover:bg-white/10'"
-                @click="selectedFilter = option.value"
-              >
-                {{ option.label }}
-              </button>
+            <div class="lg:min-w-64 lg:text-right">
+              <p class="text-sm text-zinc-400">
+                {{ nextSession ? formatDateLong(nextSession.startsAt) : '-' }}
+              </p>
+              <p class="mt-1 text-4xl font-black tabular-nums text-white">
+                {{ nextSession ? formatTime(nextSession.startsAt) : '--:--' }}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <div class="overflow-hidden rounded-lg border border-white/10 bg-panel shadow-2xl shadow-black/20">
+          <div class="border-b border-white/10 p-4">
+            <div>
+              <h2 class="text-lg font-bold text-white">
+                Race weekends
+              </h2>
+              <p class="text-sm text-zinc-500">
+                Current and upcoming Formula 1 weekends
+              </p>
             </div>
           </div>
 
@@ -88,114 +102,187 @@
           </div>
 
           <div
-            v-else
+            v-else-if="selectedEvent"
             class="divide-y divide-white/10"
           >
-            <article
-              v-for="session in filteredSessions"
-              :key="session['@id']"
-              class="grid gap-4 p-4 transition hover:bg-white/[0.03] md:grid-cols-[92px_minmax(0,1fr)_120px]"
+            <section
+              v-for="event in upcomingEvents"
+              :key="event['@id']"
+              class="bg-panel"
             >
-              <div class="flex items-center gap-3 md:block">
-                <div class="text-sm font-black text-race-red">
-                  R{{ getEvent(session)?.roundNumber ?? '-' }}
+              <button
+                type="button"
+                class="grid w-full gap-4 p-4 text-left transition hover:bg-white/[0.03] sm:grid-cols-[132px_minmax(0,1fr)_140px]"
+                :class="isEventExpanded(event) ? 'bg-white/[0.02]' : ''"
+                @click="toggleEvent(event)"
+              >
+                <div>
+                  <p class="text-sm font-black uppercase tracking-wide text-race-red">
+                    {{ formatEventDateRange(event) }}
+                  </p>
+                  <p class="mt-2 text-xs text-zinc-500">
+                    Round {{ event.roundNumber }}
+                  </p>
                 </div>
-                <div class="text-xs uppercase text-zinc-500">
-                  {{ formatDate(session.startsAt) }}
-                </div>
-              </div>
 
-              <div class="min-w-0">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h3 class="truncate text-base font-bold text-white">
-                    {{ getEvent(session)?.name ?? 'Unknown event' }}
-                  </h3>
-                  <span class="rounded bg-white/5 px-2 py-1 text-xs font-medium text-zinc-400">{{ getEvent(session)?.location ?? 'TBD' }}</span>
+                <div class="min-w-0">
+                  <div class="flex min-w-0 flex-wrap items-center gap-2">
+                    <h3
+                      class="truncate text-xl font-black text-white"
+                      :title="event.name"
+                    >
+                      {{ formatEventTitle(event) }}
+                    </h3>
+                    <span
+                      v-if="isEventActive(event, currentDate)"
+                      class="rounded bg-race-red px-2 py-1 text-xs font-bold uppercase text-white"
+                    >
+                      Live weekend
+                    </span>
+                  </div>
+                  <p class="mt-2 text-sm text-zinc-400">
+                    {{ event.location }}
+                    <span class="text-zinc-600">/</span>
+                    {{ eventSessions(event).length }} sessions
+                  </p>
                 </div>
-                <p class="mt-1 text-sm font-medium text-zinc-300">
-                  {{ session.name }}
-                </p>
-                <a
-                  :href="session.sourceUrl"
-                  target="_blank"
-                  rel="noreferrer"
-                  class="mt-2 inline-flex text-xs font-semibold text-race-red hover:text-red-300"
+
+                <div class="flex items-center justify-between gap-3 sm:justify-end">
+                  <div class="text-right">
+                    <p class="text-sm font-semibold text-zinc-300">
+                      {{ eventNextSessionLabel(event) }}
+                    </p>
+                  </div>
+                  <span
+                    class="grid size-9 place-items-center rounded-md bg-white/5 text-lg text-white transition"
+                    :class="isEventExpanded(event) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
+                  >
+                    <ChevronDown :size="18" />
+                  </span>
+                </div>
+              </button>
+
+              <div
+                v-if="isEventExpanded(event)"
+                class="border-t border-white/10 bg-black/10"
+              >
+                <div
+                  v-if="eventSessions(event).length"
+                  class="divide-y divide-white/10"
                 >
-                  Source
-                </a>
-              </div>
+                  <article
+                    v-for="session in eventSessions(event)"
+                    :key="session['@id']"
+                    class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[112px_minmax(0,1fr)_150px]"
+                    :class="sessionRowClass(session)"
+                  >
+                    <div class="flex items-center gap-3 md:items-start">
+                      <div class="min-w-16">
+                        <div
+                          class="text-xs font-black uppercase tracking-wide"
+                          :class="isSessionCompleted(session) ? 'text-zinc-600' : 'text-race-red'"
+                        >
+                          {{ formatWeekday(session.startsAt) }}
+                        </div>
+                        <div
+                          class="mt-1 text-3xl font-black leading-none tabular-nums"
+                          :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                        >
+                          {{ formatDay(session.startsAt) }}
+                        </div>
+                        <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                          {{ formatMonth(session.startsAt) }}
+                        </div>
+                      </div>
+                      <div class="hidden h-12 w-px bg-white/10 md:block" />
+                      <div class="text-xs font-semibold uppercase tracking-wide text-race-red md:hidden">
+                        {{ formatDateLong(session.startsAt) }}
+                      </div>
+                    </div>
 
-              <div class="flex items-center justify-between gap-3 md:justify-end">
-                <span class="text-2xl font-black tabular-nums text-white">{{ formatTime(session.startsAt) }}</span>
-                <span class="text-sm text-zinc-500">{{ session.endsAt ? formatTime(session.endsAt) : '' }}</span>
+                    <div class="min-w-0">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <p
+                          class="text-base font-black"
+                          :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                        >
+                          {{ session.name }}
+                        </p>
+                        <span
+                          class="rounded px-2 py-1 text-xs font-bold uppercase"
+                          :class="sessionStatusBadgeClass(session)"
+                        >
+                          {{ sessionStatusLabel(session) }}
+                        </span>
+                      </div>
+                      <p
+                        v-if="isNextSession(session)"
+                        class="mt-2 text-sm font-semibold text-race-red"
+                      >
+                        Next session
+                      </p>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 md:flex-col md:items-end md:justify-center">
+                      <div class="text-right">
+                        <p
+                          class="text-3xl font-black tabular-nums"
+                          :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                        >
+                          {{ formatTime(session.startsAt) }}
+                        </p>
+                        <p class="mt-1 text-sm text-zinc-500">
+                          {{ session.endsAt ? `until ${formatTime(session.endsAt)}` : '' }}
+                        </p>
+                      </div>
+                      <a
+                        :href="session.sourceUrl"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="text-xs font-semibold text-zinc-500 transition hover:text-race-red"
+                        @click.stop
+                      >
+                        Official source
+                      </a>
+                    </div>
+                  </article>
+                </div>
+
+                <div
+                  v-else
+                  class="p-4 text-sm text-zinc-500"
+                >
+                  No sessions match this filter.
+                </div>
               </div>
-            </article>
+            </section>
+          </div>
+
+          <div
+            v-else
+            class="grid min-h-80 place-items-center p-6 text-zinc-400"
+          >
+            No upcoming race weekend found.
           </div>
         </div>
-
-        <aside class="space-y-4">
-          <section class="rounded-lg border border-race-red/35 bg-race-red/10 p-5 shadow-2xl shadow-race-red/10">
-            <p class="text-xs font-bold uppercase tracking-[0.22em] text-race-red">
-              Next up
-            </p>
-            <h2 class="mt-4 text-2xl font-black text-white">
-              {{ nextSessionEvent?.name ?? 'No upcoming session' }}
-            </h2>
-            <p class="mt-1 text-sm text-zinc-300">
-              {{ nextSession?.name ?? 'Schedule unavailable' }}
-            </p>
-            <div class="mt-5 flex items-end justify-between gap-4">
-              <div>
-                <p class="text-sm text-zinc-400">
-                  {{ nextSession ? formatDateLong(nextSession.startsAt) : '-' }}
-                </p>
-                <p class="mt-1 text-4xl font-black text-white">
-                  {{ nextSession ? formatTime(nextSession.startsAt) : '--:--' }}
-                </p>
-              </div>
-              <div class="rounded-md bg-black/30 px-3 py-2 text-right">
-                <p class="text-xs text-zinc-500">
-                  Round
-                </p>
-                <p class="text-xl font-black text-white">
-                  {{ nextSessionEvent?.roundNumber ?? '-' }}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section class="rounded-lg border border-white/10 bg-panel p-5">
-            <h2 class="text-lg font-bold text-white">
-              Race weekends
-            </h2>
-            <div class="mt-4 space-y-2">
-              <div
-                v-for="event in events"
-                :key="event['@id']"
-                class="flex items-center gap-3 rounded-md bg-white/[0.03] px-3 py-2"
-              >
-                <span class="w-8 text-sm font-black text-race-red">R{{ event.roundNumber }}</span>
-                <div class="min-w-0">
-                  <p class="truncate text-sm font-semibold text-white">
-                    {{ event.name }}
-                  </p>
-                  <p class="text-xs text-zinc-500">
-                    {{ event.location }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </aside>
       </section>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ChevronDown } from 'lucide-vue-next'
+
 type ApiCollection<T> = {
   'member'?: T[]
   'hydra:member'?: T[]
+  'view'?: ApiCollectionView
+  'hydra:view'?: ApiCollectionView
+}
+
+type ApiCollectionView = {
+  'next'?: string
+  'hydra:next'?: string
 }
 
 type ApiEvent = {
@@ -218,16 +305,9 @@ type ApiSession = {
 }
 
 const seasonYear = 2026
-const filters = [
-  { label: 'All', value: 'all' },
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Race', value: 'race' },
-] as const
-
-type FilterValue = typeof filters[number]['value']
-
-const selectedFilter = ref<FilterValue>('all')
 const config = useRuntimeConfig()
+const expandedEventIds = ref<Set<string>>(new Set())
+const currentDate = new Date()
 
 const sessionQuery = {
   'event.season.series.code': 'F1',
@@ -241,62 +321,176 @@ const eventQuery = {
   'order[roundNumber]': 'asc',
 }
 
-const [{ data: sessionsData, pending: sessionsPending, error: sessionsError }, { data: eventsData, pending: eventsPending, error: eventsError }] = await Promise.all([
-  useFetch<ApiCollection<ApiSession>>('/sessions', {
-    baseURL: config.public.apiBase,
-    query: sessionQuery,
-    server: false,
-  }),
-  useFetch<ApiCollection<ApiEvent>>('/events', {
-    baseURL: config.public.apiBase,
-    query: eventQuery,
-    server: false,
-  }),
-])
+const { data: sessionsData, pending: sessionsPending, error: sessionsError } = await useAsyncData(
+  'formula-1-sessions',
+  () => fetchCollection<ApiSession>('/sessions', sessionQuery),
+  { default: () => [], server: false },
+)
 
-const sessions = computed(() => collectionMembers(sessionsData.value))
-const events = computed(() => collectionMembers(eventsData.value).sort((a, b) => a.roundNumber - b.roundNumber))
+const { data: eventsData, pending: eventsPending, error: eventsError } = await useAsyncData(
+  'formula-1-events',
+  () => fetchCollection<ApiEvent>('/events', eventQuery),
+  { default: () => [], server: false },
+)
+
+const sessions = computed(() => [...(sessionsData.value ?? [])].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()))
+const events = computed(() => [...(eventsData.value ?? [])].sort((a, b) => a.roundNumber - b.roundNumber))
 const pending = computed(() => sessionsPending.value || eventsPending.value)
 const errorMessage = computed(() => sessionsError.value?.message ?? eventsError.value?.message ?? '')
 const eventByIri = computed(() => new Map(events.value.map((event) => [event['@id'], event])))
-const timezoneLabel = computed(() => Intl.DateTimeFormat().resolvedOptions().timeZone)
+const sessionsByEvent = computed(() => {
+  const grouped = new Map<string, ApiSession[]>()
 
-const filteredSessions = computed(() => {
-  const now = new Date()
+  for (const session of sessions.value) {
+    grouped.set(session.event, [...(grouped.get(session.event) ?? []), session])
+  }
 
-  return sessions.value.filter((session) => {
-    if (selectedFilter.value === 'upcoming') {
-      return new Date(session.startsAt) >= now
-    }
-
-    if (selectedFilter.value === 'race') {
-      return session.name.toLowerCase() === 'race'
-    }
-
-    return true
-  })
+  return grouped
 })
 
-const nextSession = computed(() => {
+const selectedEvent = computed(() => {
   const now = new Date()
 
-  return sessions.value.find((session) => new Date(session.startsAt) >= now) ?? null
+  return events.value.find((event) => isEventActive(event, now))
+    ?? events.value.find((event) => isEventUpcoming(event, now))
+    ?? null
 })
+
+const upcomingEvents = computed(() => {
+  const now = new Date()
+
+  return events.value.filter((event) => isEventActive(event, now) || isEventUpcoming(event, now))
+})
+
+const liveSession = computed(() => {
+  const now = new Date()
+
+  return sessions.value.find((session) => isSessionLive(session, now)) ?? null
+})
+
+const nextFutureSession = computed(() => {
+  const now = new Date()
+
+  return sessions.value.find((session) => new Date(session.startsAt) > now) ?? null
+})
+
+const highlightedSession = computed(() => liveSession.value ?? nextFutureSession.value)
+const nextSession = computed(() => highlightedSession.value)
 
 const nextSessionEvent = computed(() => nextSession.value ? getEvent(nextSession.value) : null)
 
+watch(selectedEvent, (event) => {
+  if (event && !expandedEventIds.value.size) {
+    expandedEventIds.value = new Set([event['@id']])
+  }
+}, { immediate: true })
+
 function collectionMembers<T>(collection?: ApiCollection<T> | null): T[] {
   return collection?.member ?? collection?.['hydra:member'] ?? []
+}
+
+async function fetchCollection<T>(path: string, query: Record<string, string | number>): Promise<T[]> {
+  const results: T[] = []
+  let page = 1
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const collection = await $fetch<ApiCollection<T>>(path, {
+      baseURL: config.public.apiBase,
+      query: {
+        ...query,
+        page,
+      },
+    })
+
+    results.push(...collectionMembers(collection))
+    hasNextPage = Boolean(collection.view?.next ?? collection.view?.['hydra:next'] ?? collection['hydra:view']?.next ?? collection['hydra:view']?.['hydra:next'])
+    page += 1
+  }
+
+  return results
 }
 
 function getEvent(session: ApiSession): ApiEvent | undefined {
   return eventByIri.value.get(session.event)
 }
 
-function formatDate(value: string): string {
+function eventSessions(event: ApiEvent): ApiSession[] {
+  return sessionsByEvent.value.get(event['@id']) ?? []
+}
+
+function isEventExpanded(event: ApiEvent): boolean {
+  return expandedEventIds.value.has(event['@id'])
+}
+
+function toggleEvent(event: ApiEvent): void {
+  const nextExpandedEventIds = new Set(expandedEventIds.value)
+
+  if (nextExpandedEventIds.has(event['@id'])) {
+    nextExpandedEventIds.delete(event['@id'])
+  } else {
+    nextExpandedEventIds.add(event['@id'])
+  }
+
+  expandedEventIds.value = nextExpandedEventIds
+}
+
+function isEventActive(event: ApiEvent, date: Date): boolean {
+  const window = eventWindow(event)
+
+  return window ? date >= window.start && date <= window.end : false
+}
+
+function isEventUpcoming(event: ApiEvent, date: Date): boolean {
+  const window = eventWindow(event)
+
+  return window ? window.end >= date : false
+}
+
+function eventWindow(event: ApiEvent): { start: Date, end: Date } | null {
+  const eventDates = eventSessions(event)
+    .flatMap((session) => [new Date(session.startsAt), session.endsAt ? new Date(session.endsAt) : new Date(session.startsAt)])
+    .filter((date) => !Number.isNaN(date.getTime()))
+
+  if (!eventDates.length) {
+    return null
+  }
+
+  return {
+    start: new Date(Math.min(...eventDates.map((date) => startOfLocalDay(date).getTime()))),
+    end: new Date(Math.max(...eventDates.map((date) => endOfLocalDay(date).getTime()))),
+  }
+}
+
+function startOfLocalDay(date: Date): Date {
+  const start = new Date(date)
+  start.setHours(0, 0, 0, 0)
+
+  return start
+}
+
+function endOfLocalDay(date: Date): Date {
+  const end = new Date(date)
+  end.setHours(23, 59, 59, 999)
+
+  return end
+}
+
+function formatDay(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    day: '2-digit',
+  }).format(new Date(value))
+}
+
+function formatWeekday(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+  }).format(new Date(value))
+}
+
+function formatMonth(value: string): string {
   return new Intl.DateTimeFormat(undefined, {
     month: 'short',
-    day: '2-digit',
   }).format(new Date(value))
 }
 
@@ -308,10 +502,154 @@ function formatDateLong(value: string): string {
   }).format(new Date(value))
 }
 
+function formatEventTitle(event: ApiEvent): string {
+  const normalizedName = event.name
+    .replace(/^FORMULA 1\s+/i, '')
+    .replace(/\s+2026$/i, '')
+    .trim()
+
+  const spanishGrandPrix = normalizedName.match(/GRAN PREMIO DE\s+(.+)$/i)
+
+  if (spanishGrandPrix?.[1]) {
+    return `${titleCase(spanishGrandPrix[1])} Grand Prix`
+  }
+
+  const grandPrix = normalizedName.match(/([A-ZÀ-Ý][A-ZÀ-Ý\s&'.-]+)\s+GRAND PRIX$/i)
+
+  if (grandPrix?.[1]) {
+    return `${titleCase(stripSponsorPrefix(grandPrix[1]))} Grand Prix`
+  }
+
+  return `${event.location} Grand Prix`
+}
+
+function stripSponsorPrefix(value: string): string {
+  const sponsorPrefixes = [
+    'QATAR AIRWAYS',
+    'HEINEKEN',
+    'ARAMCO',
+    'CRYPTO.COM',
+    'LENOVO',
+    'LOUIS VUITTON',
+    'MSC CRUISES',
+    'PIRELLI',
+    'MOET & CHANDON',
+    'MOËT & CHANDON',
+    'AWS',
+    'TAG HEUER',
+    'ETIHAD AIRWAYS',
+  ]
+
+  return sponsorPrefixes.reduce((result, sponsor) => result.replace(new RegExp(`^${escapeRegExp(sponsor)}\\s+`, 'i'), ''), value).trim()
+}
+
+function titleCase(value: string): string {
+  return value
+    .toLocaleLowerCase()
+    .replace(/(^|[\s-])\p{L}/gu, (match) => match.toLocaleUpperCase())
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function eventNextSessionLabel(event: ApiEvent): string {
+  const now = new Date()
+  const eventSession = eventSessions(event).find((session) => isSessionLive(session, now))
+    ?? eventSessions(event).find((session) => new Date(session.startsAt) > now)
+
+  return eventSession ? `${eventSession.name} ${formatTime(eventSession.startsAt)}` : 'Weekend complete'
+}
+
+function isNextSession(session: ApiSession): boolean {
+  return nextFutureSession.value?.['@id'] === session['@id'] && !liveSession.value
+}
+
+function sessionEndDate(session: ApiSession): Date {
+  return session.endsAt ? new Date(session.endsAt) : new Date(session.startsAt)
+}
+
+function isSessionCompleted(session: ApiSession, date = new Date()): boolean {
+  return sessionEndDate(session) <= date
+}
+
+function isSessionLive(session: ApiSession, date = new Date()): boolean {
+  if (!session.endsAt) {
+    return false
+  }
+
+  const sessionStart = new Date(session.startsAt)
+  const sessionEnd = new Date(session.endsAt)
+
+  return sessionStart <= date && sessionEnd > date
+}
+
+function sessionStatusLabel(session: ApiSession): string {
+  if (isSessionLive(session)) {
+    return 'Live'
+  }
+
+  if (isSessionCompleted(session)) {
+    return 'Completed'
+  }
+
+  if (isNextSession(session)) {
+    return 'Next'
+  }
+
+  return 'Upcoming'
+}
+
+function sessionStatusBadgeClass(session: ApiSession): string {
+  if (isSessionLive(session)) {
+    return 'bg-race-red text-white shadow-lg shadow-race-red/20'
+  }
+
+  if (isSessionCompleted(session)) {
+    return 'bg-white/5 text-zinc-500'
+  }
+
+  if (isNextSession(session)) {
+    return 'bg-race-red text-white shadow-lg shadow-race-red/20'
+  }
+
+  return 'bg-white/10 text-zinc-300'
+}
+
+function sessionRowClass(session: ApiSession): string {
+  if (isSessionLive(session)) {
+    return 'border-race-red bg-race-red/10 shadow-[inset_0_0_0_1px_rgba(225,6,0,0.16)] hover:bg-race-red/15'
+  }
+
+  if (isSessionCompleted(session)) {
+    return 'border-transparent bg-black/5 opacity-70 hover:bg-white/[0.02]'
+  }
+
+  if (isNextSession(session)) {
+    return 'border-race-red bg-race-red/10 shadow-[inset_0_0_0_1px_rgba(225,6,0,0.16)] hover:bg-race-red/15'
+  }
+
+  return 'border-transparent hover:bg-white/[0.03]'
+}
+
 function formatTime(value: string): string {
   return new Intl.DateTimeFormat(undefined, {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value))
+}
+
+function formatEventDateRange(event: ApiEvent): string {
+  const window = eventWindow(event)
+
+  if (!window) {
+    return `R${event.roundNumber}`
+  }
+
+  const startDay = new Intl.DateTimeFormat(undefined, { day: '2-digit' }).format(window.start)
+  const endDay = new Intl.DateTimeFormat(undefined, { day: '2-digit' }).format(window.end)
+  const month = new Intl.DateTimeFormat(undefined, { month: 'short' }).format(window.end)
+
+  return startDay === endDay ? `${endDay} ${month}` : `${startDay}-${endDay} ${month}`
 }
 </script>
