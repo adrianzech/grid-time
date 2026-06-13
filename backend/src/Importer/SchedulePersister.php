@@ -9,6 +9,7 @@ use App\Entity\Event;
 use App\Entity\Season;
 use App\Entity\Series;
 use App\Entity\Session;
+use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,6 +22,7 @@ final readonly class SchedulePersister
 
     /**
      * @param list<RacingSession> $sessions
+     * @throws DateMalformedStringException
      */
     public function persist(int $year, array $sessions): int
     {
@@ -40,6 +42,7 @@ final readonly class SchedulePersister
             ++$persistedSessions;
         }
 
+        $season->markScheduleUpdated(new DateTimeImmutable('now', new DateTimeZone('UTC')));
         $this->entityManager->flush();
 
         return $persistedSessions;

@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
@@ -43,6 +44,9 @@ class Season
         #[ORM\Column(length: 128)]
         #[Groups(['season:read', 'event:read'])]
         private string $name,
+        #[ORM\Column(nullable: true)]
+        #[Groups(['season:read'])]
+        private ?DateTimeImmutable $scheduleUpdatedAt = null,
     ) {
     }
 
@@ -66,8 +70,18 @@ class Season
         return $this->name;
     }
 
+    public function getScheduleUpdatedAt(): ?DateTimeImmutable
+    {
+        return $this->scheduleUpdatedAt;
+    }
+
     public function updateName(string $name): void
     {
         $this->name = $name;
+    }
+
+    public function markScheduleUpdated(DateTimeImmutable $updatedAt): void
+    {
+        $this->scheduleUpdatedAt = $updatedAt;
     }
 }
