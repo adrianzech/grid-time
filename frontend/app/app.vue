@@ -14,7 +14,7 @@
               v-for="series in availableSeries"
               :key="series.code"
               type="button"
-              class="rounded-md px-3 py-2 text-left transition hover:bg-white/[0.04]"
+              class="rounded-md px-3 py-2 text-left transition hover:bg-white/4"
               :class="series.code === selectedSeriesCode ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400'"
               @click="selectSeries(series.code)"
             >
@@ -103,7 +103,7 @@
                   :key="mode.value"
                   type="button"
                   class="rounded-md px-3 py-2 text-sm font-bold transition"
-                  :class="timeMode === mode.value ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/[0.04]'"
+                  :class="timeMode === mode.value ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
                   @click="selectTimeMode(mode.value)"
                 >
                   {{ mode.label }}
@@ -137,54 +137,54 @@
             >
               <button
                 type="button"
-                class="grid w-full gap-4 p-4 text-left transition hover:bg-white/[0.03] sm:grid-cols-[132px_minmax(0,1fr)_140px]"
-                :class="isEventExpanded(event) ? 'bg-white/[0.02]' : ''"
+                class="grid w-full gap-4 p-4 text-left transition hover:bg-white/3 sm:grid-cols-[132px_minmax(0,1fr)_140px]"
+                :class="isEventExpanded(event) ? 'bg-white/2' : ''"
                 @click="toggleEvent(event)"
               >
-                <div>
-                  <p class="text-sm font-black uppercase tracking-wide text-race-red">
+                <span class="block">
+                  <span class="block text-sm font-black uppercase tracking-wide text-race-red">
                     {{ formatEventDateRange(event) }}
-                  </p>
-                  <p class="mt-2 text-xs text-zinc-500">
+                  </span>
+                  <span class="mt-2 block text-xs text-zinc-500">
                     Round {{ event.roundNumber }}
-                  </p>
-                </div>
+                  </span>
+                </span>
 
-                <div class="min-w-0">
-                  <div class="flex min-w-0 flex-wrap items-center gap-2">
-                    <h3
+                <span class="block min-w-0">
+                  <span class="flex min-w-0 flex-wrap items-center gap-2">
+                    <span
                       class="truncate text-xl font-black text-white"
                       :title="event.name"
                     >
                       {{ formatEventTitle(event) }}
-                    </h3>
+                    </span>
                     <span
                       v-if="isEventActive(event, currentDate)"
                       class="rounded bg-race-red px-2 py-1 text-xs font-bold uppercase text-white"
                     >
                       Live weekend
                     </span>
-                  </div>
-                  <p class="mt-2 text-sm text-zinc-400">
+                  </span>
+                  <span class="mt-2 block text-sm text-zinc-400">
                     {{ event.location }}
                     <span class="text-zinc-600">/</span>
                     {{ eventSessions(event).length }} sessions
-                  </p>
-                </div>
+                  </span>
+                </span>
 
-                <div class="flex items-center justify-between gap-3 sm:justify-end">
-                  <div class="text-right">
-                    <p class="text-sm font-semibold text-zinc-300">
+                <span class="flex items-center justify-between gap-3 sm:justify-end">
+                  <span class="text-right">
+                    <span class="block text-sm font-semibold text-zinc-300">
                       {{ eventNextSessionLabel(event) }}
-                    </p>
-                  </div>
+                    </span>
+                  </span>
                   <span
                     class="grid size-9 place-items-center rounded-md bg-white/5 text-lg text-white transition"
                     :class="isEventExpanded(event) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
                   >
                     <ChevronDown :size="18" />
                   </span>
-                </div>
+                </span>
               </button>
 
               <div
@@ -575,20 +575,24 @@ function formatEventTitle(event: ApiEvent): string {
 
   const spanishGrandPrix = normalizedName.match(/GRAN PREMIO DE\s+(.+)$/i)
 
+  // noinspection SpellCheckingInspection
   if (spanishGrandPrix?.[1]) {
     return `${titleCase(spanishGrandPrix[1])} Grand Prix`
   }
 
   const grandPrix = normalizedName.match(/([A-ZÀ-Ý][A-ZÀ-Ý\s&'.-]+)\s+GRAND PRIX$/i)
 
+  // noinspection SpellCheckingInspection
   if (grandPrix?.[1]) {
     return `${titleCase(stripSponsorPrefix(grandPrix[1]))} Grand Prix`
   }
 
+  // noinspection SpellCheckingInspection
   return `${event.location} Grand Prix`
 }
 
 function stripSponsorPrefix(value: string): string {
+  // noinspection SpellCheckingInspection
   const sponsorPrefixes = [
     'QATAR AIRWAYS',
     'HEINEKEN',
@@ -687,14 +691,14 @@ function sessionRowClass(session: ApiSession): string {
   }
 
   if (isSessionCompleted(session)) {
-    return 'border-transparent bg-black/5 opacity-70 hover:bg-white/[0.02]'
+    return 'border-transparent bg-black/5 opacity-70 hover:bg-white/2'
   }
 
   if (isNextSession(session)) {
     return 'border-race-red bg-race-red/10 shadow-[inset_0_0_0_1px_rgba(225,6,0,0.16)] hover:bg-race-red/15'
   }
 
-  return 'border-transparent hover:bg-white/[0.03]'
+  return 'border-transparent hover:bg-white/3'
 }
 
 function formatSessionTime(session: ApiSession, value = session.startsAt): string {
@@ -716,13 +720,13 @@ function formatSessionDatePart(value: string, session: ApiSession, options: Intl
 
 function formatEventDateRange(event: ApiEvent): string {
   const sessions = eventSessions(event)
+  const firstSession = sessions[0]
+  const lastSession = sessions.at(-1)
 
-  if (!sessions.length) {
+  if (!firstSession || !lastSession) {
     return `R${event.roundNumber}`
   }
 
-  const firstSession = sessions[0]
-  const lastSession = sessions[sessions.length - 1]
   const lastSessionEnd = lastSession.endsAt ?? lastSession.startsAt
   const startDay = formatSessionDatePart(firstSession.startsAt, firstSession, { day: '2-digit' })
   const endDay = formatSessionDatePart(lastSessionEnd, lastSession, { day: '2-digit' })
