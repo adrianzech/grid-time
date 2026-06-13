@@ -76,10 +76,10 @@
 
             <div class="lg:min-w-64 lg:text-right">
               <p class="text-sm text-zinc-400">
-                {{ nextSession ? formatDateLong(nextSession.startsAt) : '-' }}
+                {{ nextSession ? formatSessionDateLong(nextSession) : '-' }}
               </p>
               <p class="mt-1 text-4xl font-black tabular-nums text-white">
-                {{ nextSession ? formatTime(nextSession.startsAt) : '--:--' }}
+                {{ nextSession ? formatSessionTime(nextSession) : '--:--' }}
               </p>
             </div>
           </div>
@@ -87,13 +87,28 @@
 
         <div class="overflow-hidden rounded-lg border border-white/10 bg-panel shadow-2xl shadow-black/20">
           <div class="border-b border-white/10 p-4">
-            <div>
-              <h2 class="text-lg font-bold text-white">
-                Race weekends
-              </h2>
-              <p class="text-sm text-zinc-500">
-                Current and upcoming {{ selectedSeries.name }} weekends
-              </p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 class="text-lg font-bold text-white">
+                  Race weekends
+                </h2>
+                <p class="text-sm text-zinc-500">
+                  Current and upcoming {{ selectedSeries.name }} weekends
+                </p>
+              </div>
+
+              <div class="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-black/20 p-1">
+                <button
+                  v-for="mode in timeModes"
+                  :key="mode.value"
+                  type="button"
+                  class="rounded-md px-3 py-2 text-sm font-bold transition"
+                  :class="timeMode === mode.value ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/[0.04]'"
+                  @click="selectTimeMode(mode.value)"
+                >
+                  {{ mode.label }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -192,21 +207,21 @@
                           class="text-xs font-black uppercase tracking-wide"
                           :class="isSessionCompleted(session) ? 'text-zinc-600' : 'text-race-red'"
                         >
-                          {{ formatWeekday(session.startsAt) }}
+                          {{ formatSessionWeekday(session) }}
                         </div>
                         <div
                           class="mt-1 text-3xl font-black leading-none tabular-nums"
                           :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
                         >
-                          {{ formatDay(session.startsAt) }}
+                          {{ formatSessionDay(session) }}
                         </div>
                         <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
-                          {{ formatMonth(session.startsAt) }}
+                          {{ formatSessionMonth(session) }}
                         </div>
                       </div>
                       <div class="hidden h-12 w-px bg-white/10 md:block" />
                       <div class="text-xs font-semibold uppercase tracking-wide text-race-red md:hidden">
-                        {{ formatDateLong(session.startsAt) }}
+                        {{ formatSessionDateLong(session) }}
                       </div>
                     </div>
 
@@ -239,10 +254,10 @@
                           class="text-3xl font-black tabular-nums"
                           :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
                         >
-                          {{ formatTime(session.startsAt) }}
+                          {{ formatSessionTime(session) }}
                         </p>
                         <p class="mt-1 text-sm text-zinc-500">
-                          {{ session.endsAt ? `until ${formatTime(session.endsAt)}` : '' }}
+                          {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
                         </p>
                       </div>
                       <a
@@ -312,6 +327,7 @@ type ApiSession = {
   'startsAt': string
   'endsAt': string | null
   'sourceUrl': string
+  'trackTimezoneOffset': string | null
 }
 
 const seasonYear = 2026
@@ -331,9 +347,22 @@ const availableSeries = [
 ] as const
 
 type SeriesCode = typeof availableSeries[number]['code']
+type TimeMode = 'local' | 'track'
 
 const selectedSeriesCode = ref<SeriesCode>('F1')
 const selectedSeries = computed(() => availableSeries.find((series) => series.code === selectedSeriesCode.value) ?? availableSeries[0])
+const timeMode = ref<TimeMode>('local')
+
+const timeModes = [
+  {
+    value: 'local',
+    label: 'My Time',
+  },
+  {
+    value: 'track',
+    label: 'Track Time',
+  },
+] as const
 
 const sessionQuery = computed(() => ({
   'event.season.series.code': selectedSeriesCode.value,
@@ -469,6 +498,10 @@ function selectSeries(code: SeriesCode): void {
   selectedSeriesCode.value = code
 }
 
+function selectTimeMode(mode: TimeMode): void {
+  timeMode.value = mode
+}
+
 function isEventActive(event: ApiEvent, date: Date): boolean {
   const window = eventWindow(event)
 
@@ -510,30 +543,24 @@ function endOfLocalDay(date: Date): Date {
   return end
 }
 
-function formatDay(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    day: '2-digit',
-  }).format(new Date(value))
+function formatSessionDay(session: ApiSession): string {
+  return formatSessionDatePart(session.startsAt, session, { day: '2-digit' })
 }
 
-function formatWeekday(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: 'short',
-  }).format(new Date(value))
+function formatSessionWeekday(session: ApiSession): string {
+  return formatSessionDatePart(session.startsAt, session, { weekday: 'short' })
 }
 
-function formatMonth(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-  }).format(new Date(value))
+function formatSessionMonth(session: ApiSession): string {
+  return formatSessionDatePart(session.startsAt, session, { month: 'short' })
 }
 
-function formatDateLong(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
+function formatSessionDateLong(session: ApiSession): string {
+  return formatSessionDatePart(session.startsAt, session, {
     weekday: 'short',
     month: 'short',
     day: '2-digit',
-  }).format(new Date(value))
+  })
 }
 
 function formatEventTitle(event: ApiEvent): string {
@@ -596,7 +623,7 @@ function eventNextSessionLabel(event: ApiEvent): string {
   const eventSession = eventSessions(event).find((session) => isSessionLive(session, now))
     ?? eventSessions(event).find((session) => new Date(session.startsAt) > now)
 
-  return eventSession ? `${eventSession.name} ${formatTime(eventSession.startsAt)}` : 'Weekend complete'
+  return eventSession ? `${eventSession.name} ${formatSessionTime(eventSession)}` : 'Weekend complete'
 }
 
 function isNextSession(session: ApiSession): boolean {
@@ -670,24 +697,82 @@ function sessionRowClass(session: ApiSession): string {
   return 'border-transparent hover:bg-white/[0.03]'
 }
 
-function formatTime(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
+function formatSessionTime(session: ApiSession, value = session.startsAt): string {
+  return formatSessionDatePart(value, session, {
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(value))
+  })
+}
+
+function formatSessionDatePart(value: string, session: ApiSession, options: Intl.DateTimeFormatOptions): string {
+  const trackOffsetMinutes = parseTimezoneOffset(session.trackTimezoneOffset)
+  const useTrackTime = timeMode.value === 'track' && trackOffsetMinutes !== null
+
+  return new Intl.DateTimeFormat(undefined, {
+    ...options,
+    ...(useTrackTime ? { timeZone: 'UTC' } : {}),
+  }).format(useTrackTime ? new Date(new Date(value).getTime() + trackOffsetMinutes * 60_000) : new Date(value))
 }
 
 function formatEventDateRange(event: ApiEvent): string {
-  const window = eventWindow(event)
+  const sessions = eventSessions(event)
 
-  if (!window) {
+  if (!sessions.length) {
     return `R${event.roundNumber}`
   }
 
-  const startDay = new Intl.DateTimeFormat(undefined, { day: '2-digit' }).format(window.start)
-  const endDay = new Intl.DateTimeFormat(undefined, { day: '2-digit' }).format(window.end)
-  const month = new Intl.DateTimeFormat(undefined, { month: 'short' }).format(window.end)
+  const firstSession = sessions[0]
+  const lastSession = sessions[sessions.length - 1]
+  const lastSessionEnd = lastSession.endsAt ?? lastSession.startsAt
+  const startDay = formatSessionDatePart(firstSession.startsAt, firstSession, { day: '2-digit' })
+  const endDay = formatSessionDatePart(lastSessionEnd, lastSession, { day: '2-digit' })
+  const month = formatSessionDatePart(lastSessionEnd, lastSession, { month: 'short' })
 
-  return startDay === endDay ? `${endDay} ${month}` : `${startDay}-${endDay} ${month}`
+  return sameDisplayDay(firstSession.startsAt, firstSession, lastSessionEnd, lastSession) ? `${endDay} ${month}` : `${startDay}-${endDay} ${month}`
+}
+
+function sameDisplayDay(firstValue: string, firstSession: ApiSession, secondValue: string, secondSession: ApiSession): boolean {
+  return displayDateKey(firstValue, firstSession) === displayDateKey(secondValue, secondSession)
+}
+
+function displayDateKey(value: string, session: ApiSession): string {
+  const useTrackTime = timeMode.value === 'track' && parseTimezoneOffset(session.trackTimezoneOffset) !== null
+  const parts = new Intl.DateTimeFormat('en', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    ...(useTrackTime ? { timeZone: 'UTC' } : {}),
+  }).formatToParts(displayDate(value, session))
+  const year = parts.find((part) => part.type === 'year')?.value ?? ''
+  const month = parts.find((part) => part.type === 'month')?.value ?? ''
+  const day = parts.find((part) => part.type === 'day')?.value ?? ''
+
+  return `${year}-${month}-${day}`
+}
+
+function displayDate(value: string, session: ApiSession): Date {
+  const trackOffsetMinutes = parseTimezoneOffset(session.trackTimezoneOffset)
+
+  if (timeMode.value !== 'track' || trackOffsetMinutes === null) {
+    return new Date(value)
+  }
+
+  return new Date(new Date(value).getTime() + trackOffsetMinutes * 60_000)
+}
+
+function parseTimezoneOffset(value: string | null): number | null {
+  if (!value) {
+    return null
+  }
+
+  const match = value.match(/^(?<sign>[+-])(?<hours>\d{2}):(?<minutes>\d{2})$/)
+
+  if (!match?.groups) {
+    return null
+  }
+
+  const multiplier = match.groups.sign === '-' ? -1 : 1
+
+  return multiplier * (Number(match.groups.hours) * 60 + Number(match.groups.minutes))
 }
 </script>
