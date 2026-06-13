@@ -71,6 +71,15 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "phpmd": [
+            "@php vendor/bin/phpmd analyze src/ --format=text --ruleset=phpmd.xml.dist"
+        ],
+        "code-analysis": [
+            "@phpmd"
+        ],
+        "ci-check": [
+            "@code-analysis"
         ]
     },
     "conflict": {
@@ -81,5 +90,9 @@
             "allow-contrib": false,
             "require": "8.1.*"
         }
+    },
+    "require-dev": {
+        "pdepend/pdepend": "^3@dev",
+        "phpmd/phpmd": "^3@dev"
     }
 }
