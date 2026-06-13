@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --color-race-red: #e10600;
+  --color-race-red-dark: #9f0804;
+  --color-carbon: #090a0d;
+  --color-panel: #111319;
+  --color-panel-soft: #181b23;
+}
+
+html {
+  background: #090a0d;
+}
+
+body {
+  min-width: 320px;
+}
