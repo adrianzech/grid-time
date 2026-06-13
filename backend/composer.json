@@ -72,10 +72,17 @@
         "post-update-cmd": [
             "@auto-scripts"
         ],
+        "cs-check": [
+            "@php vendor/bin/php-cs-fixer fix --dry-run --diff"
+        ],
+        "cs-fix": [
+            "@php vendor/bin/php-cs-fixer fix"
+        ],
         "phpmd": [
             "@php vendor/bin/phpmd analyze src/ --format=text --ruleset=phpmd.xml.dist"
         ],
         "code-analysis": [
+            "@cs-check",
             "@phpmd"
         ],
         "ci-check": [
@@ -92,6 +99,7 @@
         }
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
         "pdepend/pdepend": "^3@dev",
         "phpmd/phpmd": "^3@dev"
     }
