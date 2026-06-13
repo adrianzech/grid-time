@@ -6,7 +6,6 @@ namespace App\Tests\Scraper;
 
 use App\Scraper\Formula2ScheduleScraper;
 use Closure;
-use DateTimeZone;
 use JsonException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -61,7 +60,7 @@ final class Formula2ScheduleScraperTest extends TestCase
             ]),
         ]));
 
-        $sessions = $scraper->scrape(2026, new DateTimeZone('UTC'));
+        $sessions = $scraper->scrape(2026);
 
         self::assertCount(2, $sessions);
         self::assertSame('F2', $sessions[0]->series);
@@ -73,6 +72,7 @@ final class Formula2ScheduleScraperTest extends TestCase
         self::assertSame('2026-06-26 09:55:00', $sessions[0]->startsAt->format('Y-m-d H:i:s'));
         self::assertSame('2026-06-26 10:40:00', $sessions[0]->endsAt?->format('Y-m-d H:i:s'));
         self::assertSame('https://www.fiaformula2.com/Results?raceid=1096', $sessions[0]->sourceUrl);
+        self::assertSame('+02:00', $sessions[0]->trackTimezoneOffset);
     }
 
     /**
@@ -134,13 +134,14 @@ final class Formula2ScheduleScraperTest extends TestCase
             ]),
         ]));
 
-        $sessions = $scraper->scrape(2025, new DateTimeZone('UTC'));
+        $sessions = $scraper->scrape(2025);
 
         self::assertCount(1, $sessions);
         self::assertSame(7, $sessions[0]->round);
         self::assertSame('Red Bull Ring', $sessions[0]->location);
         self::assertSame('Sprint Race', $sessions[0]->sessionName);
         self::assertSame('2025-06-28 12:15:00', $sessions[0]->startsAt->format('Y-m-d H:i:s'));
+        self::assertSame('+02:00', $sessions[0]->trackTimezoneOffset);
     }
 
     /**
@@ -190,7 +191,7 @@ final class Formula2ScheduleScraperTest extends TestCase
             ]),
         ]));
 
-        $sessions = $scraper->scrape(2026, new DateTimeZone('UTC'));
+        $sessions = $scraper->scrape(2026);
 
         self::assertCount(1, $sessions);
         self::assertSame('Qualifying Session', $sessions[0]->sessionName);

@@ -52,6 +52,9 @@ class Session
         #[ORM\Column(length: 512)]
         #[Groups(['session:read'])]
         private string $sourceUrl,
+        #[ORM\Column(length: 6, nullable: true)]
+        #[Groups(['session:read'])]
+        private ?string $trackTimezoneOffset,
     ) {
     }
 
@@ -85,10 +88,16 @@ class Session
         return $this->sourceUrl;
     }
 
-    public function updateFromSchedule(DateTimeImmutable $startsAt, ?DateTimeImmutable $endsAt, string $sourceUrl): void
+    public function getTrackTimezoneOffset(): ?string
+    {
+        return $this->trackTimezoneOffset;
+    }
+
+    public function updateFromSchedule(DateTimeImmutable $startsAt, ?DateTimeImmutable $endsAt, string $sourceUrl, ?string $trackTimezoneOffset): void
     {
         $this->startsAt = $startsAt;
         $this->endsAt = $endsAt;
         $this->sourceUrl = $sourceUrl;
+        $this->trackTimezoneOffset = $trackTimezoneOffset;
     }
 }

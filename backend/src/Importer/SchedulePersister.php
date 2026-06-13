@@ -132,6 +132,7 @@ final readonly class SchedulePersister
                 $this->toUtc($racingSession->startsAt),
                 $racingSession->endsAt === null ? null : $this->toUtc($racingSession->endsAt),
                 $racingSession->sourceUrl,
+                $racingSession->trackTimezoneOffset,
             );
 
             return;
@@ -146,7 +147,7 @@ final readonly class SchedulePersister
         $endsAt = $racingSession->endsAt === null ? null : $this->toUtc($racingSession->endsAt);
 
         if ($session instanceof Session) {
-            $session->updateFromSchedule($startsAt, $endsAt, $racingSession->sourceUrl);
+            $session->updateFromSchedule($startsAt, $endsAt, $racingSession->sourceUrl, $racingSession->trackTimezoneOffset);
             $sessionsByEventAndName[$cacheKey] = $session;
 
             return;
@@ -158,6 +159,7 @@ final readonly class SchedulePersister
             startsAt: $startsAt,
             endsAt: $endsAt,
             sourceUrl: $racingSession->sourceUrl,
+            trackTimezoneOffset: $racingSession->trackTimezoneOffset,
         );
         $this->entityManager->persist($session);
         $sessionsByEventAndName[$cacheKey] = $session;

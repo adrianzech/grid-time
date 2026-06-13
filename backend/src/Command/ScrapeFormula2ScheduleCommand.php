@@ -6,7 +6,6 @@ namespace App\Command;
 
 use App\Importer\SchedulePersister;
 use App\Scraper\Formula2ScheduleScraper;
-use DateTimeZone;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -33,7 +32,6 @@ final class ScrapeFormula2ScheduleCommand extends Command
     {
         $this
             ->addOption('year', null, InputOption::VALUE_REQUIRED, 'Season year to scrape.', '2026')
-            ->addOption('timezone', null, InputOption::VALUE_REQUIRED, 'Timezone for parsed session times.', 'Europe/Vienna')
         ;
     }
 
@@ -49,8 +47,7 @@ final class ScrapeFormula2ScheduleCommand extends Command
         }
 
         try {
-            $timezone = new DateTimeZone((string) $input->getOption('timezone'));
-            $sessions = $this->scraper->scrape($year, new DateTimeZone('UTC'));
+            $sessions = $this->scraper->scrape($year);
             $persistedSessions = $this->schedulePersister->persist($year, $sessions);
         } catch (Throwable $exception) {
             $io->error($exception->getMessage());
@@ -68,18 +65,15 @@ final class ScrapeFormula2ScheduleCommand extends Command
         $table->setHeaders(['Series', 'Round', 'Event', 'Session', 'Date', 'Start', 'End', 'TZ']);
 
         foreach ($sessions as $session) {
-            $startsAt = $session->startsAt->setTimezone($timezone);
-            $endsAt = $session->endsAt?->setTimezone($timezone);
-
             $table->addRow([
                 $session->series,
                 (string) $session->round,
                 $session->location,
                 $session->sessionName,
-                $startsAt->format('Y-m-d'),
-                $startsAt->format('H:i'),
-                $endsAt?->format('H:i') ?? '',
-                $timezone->getName(),
+                $session->startsAt->format('Y-m-d'),
+                $session->startsAt->format('H:i'),
+                $session->endsAt?->format('H:i') ?? '',
+                'UTC',
             ]);
         }
 

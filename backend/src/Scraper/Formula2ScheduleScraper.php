@@ -5,14 +5,10 @@ declare(strict_types=1);
 namespace App\Scraper;
 
 use App\Dto\RacingSession;
+use App\Dto\RacingSessionTiming;
 use Closure;
-use DateTimeImmutable;
 use DateTimeZone;
-use DOMDocument;
-use DOMElement;
-use DOMXPath;
 use RuntimeException;
-use Throwable;
 
 final readonly class Formula2ScheduleScraper
 {
@@ -20,20 +16,23 @@ final readonly class Formula2ScheduleScraper
     private const string SERIES_CODE = 'F2';
     private const string SERIES_NAME = 'Formula 2';
 
-    public function __construct(private ?Closure $fetcher = null)
+    private Formula2ScheduleDataExtractor $extractor;
+
+    public function __construct(private ?Closure $fetcher = null, ?Formula2ScheduleDataExtractor $extractor = null)
     {
+        $this->extractor = $extractor ?? new Formula2ScheduleDataExtractor();
     }
 
     /**
      * @return list<RacingSession>
      */
-    public function scrape(int $year, DateTimeZone $timezone): array
+    public function scrape(int $year): array
     {
         $races = $this->discoverRaces($year);
         $sessions = [];
 
         foreach ($races as $race) {
-            foreach ($this->scrapeRace($race, $timezone) as $session) {
+            foreach ($this->scrapeRace($race) as $session) {
                 $sessions[] = $session;
             }
         }
@@ -49,7 +48,7 @@ final readonly class Formula2ScheduleScraper
     private function discoverRaces(int $year): array
     {
         $calendarData = $this->fetchCalendarData(self::BASE_URL . '/Calendar');
-        $pageData = $this->extractYearFromSeasonName($this->stringValue($calendarData['pageData']['SeasonName'] ?? null)) === $year
+        $pageData = $this->extractor->extractYearFromSeasonName($this->extractor->stringValue($calendarData['pageData']['SeasonName'] ?? null)) === $year
             ? $calendarData['pageData']
             : $this->fetchCalendarPageDataForYear($calendarData, $year);
 
@@ -66,11 +65,11 @@ final readonly class Formula2ScheduleScraper
                 continue;
             }
 
-            $raceId = $this->intValue($race['RaceId'] ?? null);
-            $roundNumber = $this->intValue($race['RoundNumber'] ?? null);
-            $countryName = $this->stringValue($race['CountryName'] ?? null);
-            $location = $this->stringValue($race['CircuitShortName'] ?? null)
-                ?? $this->stringValue($race['CircuitName'] ?? null)
+            $raceId = $this->extractor->intValue($race['RaceId'] ?? null);
+            $roundNumber = $this->extractor->intValue($race['RoundNumber'] ?? null);
+            $countryName = $this->extractor->stringValue($race['CountryName'] ?? null);
+            $location = $this->extractor->stringValue($race['CircuitShortName'] ?? null)
+                ?? $this->extractor->stringValue($race['CircuitName'] ?? null)
                 ?? $countryName;
 
             if ($raceId === null || $roundNumber === null || $countryName === null || $location === null) {
@@ -111,7 +110,7 @@ final readonly class Formula2ScheduleScraper
      */
     private function fetchCalendarData(string $url): array
     {
-        $nextData = $this->extractNextData($this->fetch($url), $url);
+        $nextData = $this->extractor->extractNextData($this->fetch($url), $url);
         $pageData = $nextData['props']['pageProps']['pageData'] ?? null;
 
         if (!is_array($pageData)) {
@@ -140,11 +139,11 @@ final readonly class Formula2ScheduleScraper
                 continue;
             }
 
-            if ($this->extractYearFromSeasonName($this->stringValue($season['SeasonName'] ?? null)) !== $year) {
+            if ($this->extractor->extractYearFromSeasonName($this->extractor->stringValue($season['SeasonName'] ?? null)) !== $year) {
                 continue;
             }
 
-            return $this->intValue($season['SeasonId'] ?? null);
+            return $this->extractor->intValue($season['SeasonId'] ?? null);
         }
 
         return null;
@@ -155,19 +154,19 @@ final readonly class Formula2ScheduleScraper
      *
      * @return list<RacingSession>
      */
-    private function scrapeRace(array $race, DateTimeZone $timezone): array
+    private function scrapeRace(array $race): array
     {
         $url = sprintf('%s/Results?raceid=%d', self::BASE_URL, $race['raceId']);
-        $nextData = $this->extractNextData($this->fetch($url), $url);
+        $nextData = $this->extractor->extractNextData($this->fetch($url), $url);
         $pageData = $nextData['props']['pageProps']['pageData'] ?? null;
 
         if (!is_array($pageData)) {
             return [];
         }
 
-        $eventName = $this->stringValue($pageData['CountryName'] ?? null) ?? $race['countryName'];
-        $location = $this->stringValue($pageData['CircuitShortName'] ?? null)
-            ?? $this->stringValue($pageData['CircuitInformation']['CircuitName'] ?? null)
+        $eventName = $this->extractor->stringValue($pageData['CountryName'] ?? null) ?? $race['countryName'];
+        $location = $this->extractor->stringValue($pageData['CircuitShortName'] ?? null)
+            ?? $this->extractor->stringValue($pageData['CircuitInformation']['CircuitName'] ?? null)
             ?? $race['location'];
         $sessionResults = $pageData['SessionResults'] ?? null;
 
@@ -182,14 +181,16 @@ final readonly class Formula2ScheduleScraper
                 continue;
             }
 
-            $sessionName = $this->stringValue($session['SessionName'] ?? null);
-            $startsAt = $this->dateTimeValue($session['SessionStartTime'] ?? null);
+            $sessionName = $this->extractor->stringValue($session['SessionName'] ?? null);
+            $sessionStartTime = $this->extractor->stringValue($session['SessionStartTime'] ?? null);
+            $startsAt = $this->extractor->dateTimeValue($sessionStartTime);
 
             if ($sessionName === null || $startsAt === null) {
                 continue;
             }
 
-            $endsAt = $this->dateTimeValue($session['SessionEndTime'] ?? null);
+            $endsAt = $this->extractor->dateTimeValue($session['SessionEndTime'] ?? null);
+            $trackTimezoneOffset = $this->extractor->extractTimezoneOffset($sessionStartTime);
 
             $sessions[] = new RacingSession(
                 series: self::SERIES_CODE,
@@ -198,8 +199,7 @@ final readonly class Formula2ScheduleScraper
                 eventName: $eventName,
                 location: $location,
                 sessionName: $sessionName,
-                startsAt: $startsAt->setTimezone($timezone),
-                endsAt: $endsAt?->setTimezone($timezone),
+                timing: new RacingSessionTiming(startsAt: $startsAt->setTimezone(new DateTimeZone('UTC')), endsAt: $endsAt?->setTimezone(new DateTimeZone('UTC')), trackTimezoneOffset: $trackTimezoneOffset),
                 sourceUrl: $url,
             );
         }
@@ -207,33 +207,6 @@ final readonly class Formula2ScheduleScraper
         usort($sessions, static fn (RacingSession $a, RacingSession $b): int => $a->startsAt <=> $b->startsAt);
 
         return $sessions;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function extractNextData(string $html, string $url): array
-    {
-        $document = new DOMDocument();
-        $previous = libxml_use_internal_errors(true);
-        $document->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
-        libxml_clear_errors();
-        libxml_use_internal_errors($previous);
-
-        $xpath = new DOMXPath($document);
-        $node = $xpath->query('//script[@id="__NEXT_DATA__"]')->item(0);
-
-        if (!$node instanceof DOMElement) {
-            throw new RuntimeException(sprintf('Could not find Next.js data in "%s".', $url));
-        }
-
-        $data = json_decode($node->textContent, true);
-
-        if (!is_array($data)) {
-            throw new RuntimeException(sprintf('Could not decode Next.js data in "%s".', $url));
-        }
-
-        return $data;
     }
 
     private function fetch(string $url): string
@@ -262,51 +235,5 @@ final readonly class Formula2ScheduleScraper
         }
 
         return $html;
-    }
-
-    private function extractYearFromSeasonName(?string $seasonName): ?int
-    {
-        if ($seasonName === null || preg_match('/\b(?<year>\d{4})\b/', $seasonName, $matches) !== 1) {
-            return null;
-        }
-
-        return (int) $matches['year'];
-    }
-
-    private function stringValue(mixed $value): ?string
-    {
-        if (!is_string($value)) {
-            return null;
-        }
-
-        $value = trim($value);
-
-        return $value === '' ? null : $value;
-    }
-
-    private function intValue(mixed $value): ?int
-    {
-        if (is_int($value)) {
-            return $value;
-        }
-
-        if (is_string($value) && ctype_digit($value)) {
-            return (int) $value;
-        }
-
-        return null;
-    }
-
-    private function dateTimeValue(mixed $value): ?DateTimeImmutable
-    {
-        if (!is_string($value) || trim($value) === '') {
-            return null;
-        }
-
-        try {
-            return new DateTimeImmutable($value);
-        } catch (Throwable) {
-            return null;
-        }
     }
 }

@@ -15,9 +15,17 @@ final readonly class RacingSession
         public string $eventName,
         public string $location,
         public string $sessionName,
-        public DateTimeImmutable $startsAt,
-        public ?DateTimeImmutable $endsAt,
+        RacingSessionTiming $timing,
         public string $sourceUrl,
     ) {
+        $this->startsAt = $timing->startsAt;
+        $this->endsAt = $timing->endsAt;
+        $this->trackTimezoneOffset = $timing->trackTimezoneOffset;
     }
+
+    public DateTimeImmutable $startsAt;
+
+    public ?DateTimeImmutable $endsAt;
+
+    public ?string $trackTimezoneOffset;
 }
