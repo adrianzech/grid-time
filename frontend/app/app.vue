@@ -94,6 +94,12 @@
                 </h2>
                 <p class="text-sm text-zinc-500">
                   Current and upcoming {{ selectedSeries.name }} weekends
+                  <span
+                    v-if="isRefreshing"
+                    class="ml-2 text-race-red"
+                  >
+                    Updating...
+                  </span>
                 </p>
               </div>
 
@@ -112,183 +118,204 @@
             </div>
           </div>
 
-          <div
-            v-if="pending"
-            class="grid min-h-80 place-items-center p-6 text-zinc-400"
+          <Transition
+            mode="out-in"
+            enter-active-class="transition duration-150 ease-out"
+            enter-from-class="opacity-0 translate-y-1"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 translate-y-1"
           >
-            Loading schedule...
-          </div>
-
-          <div
-            v-else-if="errorMessage"
-            class="m-4 rounded-lg border border-race-red/40 bg-race-red/10 p-4 text-sm text-red-100"
-          >
-            {{ errorMessage }}
-          </div>
-
-          <div
-            v-else-if="selectedEvent"
-            class="divide-y divide-white/10"
-          >
-            <section
-              v-for="event in upcomingEvents"
-              :key="event['@id']"
-              class="bg-panel"
+            <div
+              v-if="pending"
+              :key="`${selectedSeriesCode}-loading`"
+              class="grid min-h-80 place-items-center p-6 text-zinc-400"
             >
-              <button
-                type="button"
-                class="grid w-full gap-4 p-4 text-left transition hover:bg-white/3 sm:grid-cols-[132px_minmax(0,1fr)_140px]"
-                :class="isEventExpanded(event) ? 'bg-white/2' : ''"
-                @click="toggleEvent(event)"
-              >
-                <span class="block">
-                  <span class="block text-sm font-black uppercase tracking-wide text-race-red">
-                    {{ formatEventDateRange(event) }}
-                  </span>
-                  <span class="mt-2 block text-xs text-zinc-500">
-                    Round {{ event.roundNumber }}
-                  </span>
-                </span>
+              Loading schedule...
+            </div>
 
-                <span class="block min-w-0">
-                  <span class="flex min-w-0 flex-wrap items-center gap-2">
-                    <span
-                      class="truncate text-xl font-black text-white"
-                      :title="event.name"
-                    >
-                      {{ formatEventTitle(event) }}
-                    </span>
-                    <span
-                      v-if="isEventActive(event, currentDate)"
-                      class="rounded bg-race-red px-2 py-1 text-xs font-bold uppercase text-white"
-                    >
-                      Live weekend
-                    </span>
-                  </span>
-                  <span class="mt-2 block text-sm text-zinc-400">
-                    {{ event.location }}
-                    <span class="text-zinc-600">/</span>
-                    {{ eventSessions(event).length }} sessions
-                  </span>
-                </span>
+            <div
+              v-else-if="errorMessage"
+              :key="`${selectedSeriesCode}-error`"
+              class="m-4 rounded-lg border border-race-red/40 bg-race-red/10 p-4 text-sm text-red-100"
+            >
+              {{ errorMessage }}
+            </div>
 
-                <span class="flex items-center justify-between gap-3 sm:justify-end">
-                  <span class="text-right">
-                    <span class="block text-sm font-semibold text-zinc-300">
-                      {{ eventNextSessionLabel(event) }}
-                    </span>
-                  </span>
-                  <span
-                    class="grid size-9 place-items-center rounded-md bg-white/5 text-lg text-white transition"
-                    :class="isEventExpanded(event) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
-                  >
-                    <ChevronDown :size="18" />
-                  </span>
-                </span>
-              </button>
-
+            <div
+              v-else-if="selectedEvent"
+              :key="`${selectedSeriesCode}-events`"
+              class="divide-y divide-white/10"
+            >
               <div
-                v-if="isEventExpanded(event)"
-                class="border-t border-white/10 bg-black/10"
+                v-if="refreshErrorMessage"
+                class="border-b border-race-red/30 bg-race-red/10 p-3 text-sm text-red-100"
               >
-                <div
-                  v-if="eventSessions(event).length"
-                  class="divide-y divide-white/10"
-                >
-                  <article
-                    v-for="session in eventSessions(event)"
-                    :key="session['@id']"
-                    class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[112px_minmax(0,1fr)_150px]"
-                    :class="sessionRowClass(session)"
-                  >
-                    <div class="flex items-center gap-3 md:items-start">
-                      <div class="min-w-16">
-                        <div
-                          class="text-xs font-black uppercase tracking-wide"
-                          :class="isSessionCompleted(session) ? 'text-zinc-600' : 'text-race-red'"
-                        >
-                          {{ formatSessionWeekday(session) }}
-                        </div>
-                        <div
-                          class="mt-1 text-3xl font-black leading-none tabular-nums"
-                          :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
-                        >
-                          {{ formatSessionDay(session) }}
-                        </div>
-                        <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
-                          {{ formatSessionMonth(session) }}
-                        </div>
-                      </div>
-                      <div class="hidden h-12 w-px bg-white/10 md:block" />
-                      <div class="text-xs font-semibold uppercase tracking-wide text-race-red md:hidden">
-                        {{ formatSessionDateLong(session) }}
-                      </div>
-                    </div>
-
-                    <div class="min-w-0">
-                      <div class="flex flex-wrap items-center gap-2">
-                        <p
-                          class="text-base font-black"
-                          :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
-                        >
-                          {{ session.name }}
-                        </p>
-                        <span
-                          class="rounded px-2 py-1 text-xs font-bold uppercase"
-                          :class="sessionStatusBadgeClass(session)"
-                        >
-                          {{ sessionStatusLabel(session) }}
-                        </span>
-                      </div>
-                      <p
-                        v-if="isNextSession(session)"
-                        class="mt-2 text-sm font-semibold text-race-red"
-                      >
-                        Next session
-                      </p>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-3 md:flex-col md:items-end md:justify-center">
-                      <div class="text-right">
-                        <p
-                          class="text-3xl font-black tabular-nums"
-                          :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
-                        >
-                          {{ formatSessionTime(session) }}
-                        </p>
-                        <p class="mt-1 text-sm text-zinc-500">
-                          {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
-                        </p>
-                      </div>
-                      <a
-                        :href="session.sourceUrl"
-                        target="_blank"
-                        rel="noreferrer"
-                        class="text-xs font-semibold text-zinc-500 transition hover:text-race-red"
-                        @click.stop
-                      >
-                        Official source
-                      </a>
-                    </div>
-                  </article>
-                </div>
-
-                <div
-                  v-else
-                  class="p-4 text-sm text-zinc-500"
-                >
-                  No sessions match this filter.
-                </div>
+                {{ refreshErrorMessage }}
               </div>
-            </section>
-          </div>
 
-          <div
-            v-else
-            class="grid min-h-80 place-items-center p-6 text-zinc-400"
-          >
-            No upcoming race weekend found.
-          </div>
+              <section
+                v-for="event in upcomingEvents"
+                :key="event['@id']"
+                class="bg-panel"
+              >
+                <button
+                  type="button"
+                  class="grid w-full gap-4 p-4 text-left transition hover:bg-white/3 sm:grid-cols-[132px_minmax(0,1fr)_140px]"
+                  :class="isEventExpanded(event) ? 'bg-white/2' : ''"
+                  @click="toggleEvent(event)"
+                >
+                  <span class="block">
+                    <span class="block text-sm font-black uppercase tracking-wide text-race-red">
+                      {{ formatEventDateRange(event) }}
+                    </span>
+                    <span class="mt-2 block text-xs text-zinc-500">
+                      Round {{ event.roundNumber }}
+                    </span>
+                  </span>
+
+                  <span class="block min-w-0">
+                    <span class="flex min-w-0 flex-wrap items-center gap-2">
+                      <span
+                        class="truncate text-xl font-black text-white"
+                        :title="event.name"
+                      >
+                        {{ formatEventTitle(event) }}
+                      </span>
+                      <span
+                        v-if="isEventActive(event, currentDate)"
+                        class="rounded bg-race-red px-2 py-1 text-xs font-bold uppercase text-white"
+                      >
+                        Live weekend
+                      </span>
+                    </span>
+                    <span class="mt-2 block text-sm text-zinc-400">
+                      {{ event.location }}
+                      <span class="text-zinc-600">/</span>
+                      {{ eventSessions(event).length }} sessions
+                    </span>
+                  </span>
+
+                  <span class="flex items-center justify-between gap-3 sm:justify-end">
+                    <span class="text-right">
+                      <span class="block text-sm font-semibold text-zinc-300">
+                        {{ eventNextSessionLabel(event) }}
+                      </span>
+                    </span>
+                    <span
+                      class="grid size-9 place-items-center rounded-md bg-white/5 text-lg text-white transition"
+                      :class="isEventExpanded(event) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
+                    >
+                      <ChevronDown :size="18" />
+                    </span>
+                  </span>
+                </button>
+
+                <div
+                  v-if="isEventExpanded(event)"
+                  class="border-t border-white/10 bg-black/10"
+                >
+                  <div
+                    v-if="eventSessions(event).length"
+                    class="divide-y divide-white/10"
+                  >
+                    <article
+                      v-for="session in eventSessions(event)"
+                      :key="session['@id']"
+                      class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[112px_minmax(0,1fr)_150px]"
+                      :class="sessionRowClass(session)"
+                    >
+                      <div class="flex items-center gap-3 md:items-start">
+                        <div class="min-w-16">
+                          <div
+                            class="text-xs font-black uppercase tracking-wide"
+                            :class="isSessionCompleted(session) ? 'text-zinc-600' : 'text-race-red'"
+                          >
+                            {{ formatSessionWeekday(session) }}
+                          </div>
+                          <div
+                            class="mt-1 text-3xl font-black leading-none tabular-nums"
+                            :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                          >
+                            {{ formatSessionDay(session) }}
+                          </div>
+                          <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                            {{ formatSessionMonth(session) }}
+                          </div>
+                        </div>
+                        <div class="hidden h-12 w-px bg-white/10 md:block" />
+                        <div class="text-xs font-semibold uppercase tracking-wide text-race-red md:hidden">
+                          {{ formatSessionDateLong(session) }}
+                        </div>
+                      </div>
+
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <p
+                            class="text-base font-black"
+                            :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                          >
+                            {{ session.name }}
+                          </p>
+                          <span
+                            class="rounded px-2 py-1 text-xs font-bold uppercase"
+                            :class="sessionStatusBadgeClass(session)"
+                          >
+                            {{ sessionStatusLabel(session) }}
+                          </span>
+                        </div>
+                        <p
+                          v-if="isNextSession(session)"
+                          class="mt-2 text-sm font-semibold text-race-red"
+                        >
+                          Next session
+                        </p>
+                      </div>
+
+                      <div class="flex items-center justify-between gap-3 md:flex-col md:items-end md:justify-center">
+                        <div class="text-right">
+                          <p
+                            class="text-3xl font-black tabular-nums"
+                            :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                          >
+                            {{ formatSessionTime(session) }}
+                          </p>
+                          <p class="mt-1 text-sm text-zinc-500">
+                            {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
+                          </p>
+                        </div>
+                        <a
+                          :href="session.sourceUrl"
+                          target="_blank"
+                          rel="noreferrer"
+                          class="text-xs font-semibold text-zinc-500 transition hover:text-race-red"
+                          @click.stop
+                        >
+                          Official source
+                        </a>
+                      </div>
+                    </article>
+                  </div>
+
+                  <div
+                    v-else
+                    class="p-4 text-sm text-zinc-500"
+                  >
+                    No sessions match this filter.
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div
+              v-else
+              :key="`${selectedSeriesCode}-empty`"
+              class="grid min-h-80 place-items-center p-6 text-zinc-400"
+            >
+              No upcoming race weekend found.
+            </div>
+          </Transition>
         </div>
       </section>
     </main>
@@ -297,41 +324,9 @@
 
 <script setup lang="ts">
 import { ChevronDown } from 'lucide-vue-next'
-
-type ApiCollection<T> = {
-  'member'?: T[]
-  'hydra:member'?: T[]
-  'view'?: ApiCollectionView
-  'hydra:view'?: ApiCollectionView
-}
-
-type ApiCollectionView = {
-  'next'?: string
-  'hydra:next'?: string
-}
-
-type ApiEvent = {
-  '@id': string
-  'id': number
-  'roundNumber': number
-  'name': string
-  'location': string
-  'sourceUrl': string
-}
-
-type ApiSession = {
-  '@id': string
-  'id': number
-  'event': string
-  'name': string
-  'startsAt': string
-  'endsAt': string | null
-  'sourceUrl': string
-  'trackTimezoneOffset': string | null
-}
+import type { ApiEvent, ApiSession, ScheduleCacheEntry } from '~/composables/useScheduleCache'
 
 const seasonYear = 2026
-const config = useRuntimeConfig()
 const expandedEventIds = ref<Set<string>>(new Set())
 const currentDate = new Date()
 
@@ -352,6 +347,14 @@ type TimeMode = 'local' | 'track'
 const selectedSeriesCode = ref<SeriesCode>('F1')
 const selectedSeries = computed(() => availableSeries.find((series) => series.code === selectedSeriesCode.value) ?? availableSeries[0])
 const timeMode = ref<TimeMode>('local')
+const scheduleCache = useScheduleCache(availableSeries.map((series) => series.code), 'F1', seasonYear)
+const emptySchedule: ScheduleCacheEntry = {
+  events: [],
+  sessions: [],
+  scheduleUpdatedAt: null,
+  status: 'idle',
+  error: '',
+}
 
 const timeModes = [
   {
@@ -364,34 +367,14 @@ const timeModes = [
   },
 ] as const
 
-const sessionQuery = computed(() => ({
-  'event.season.series.code': selectedSeriesCode.value,
-  'event.season.year': seasonYear,
-  'order[startsAt]': 'asc',
-}))
-
-const eventQuery = computed(() => ({
-  'season.series.code': selectedSeriesCode.value,
-  'season.year': seasonYear,
-  'order[roundNumber]': 'asc',
-}))
-
-const { data: sessionsData, pending: sessionsPending, error: sessionsError } = await useAsyncData(
-  'schedule-sessions',
-  () => fetchCollection<ApiSession>('/sessions', sessionQuery.value),
-  { default: () => [], server: false, watch: [selectedSeriesCode] },
-)
-
-const { data: eventsData, pending: eventsPending, error: eventsError } = await useAsyncData(
-  'schedule-events',
-  () => fetchCollection<ApiEvent>('/events', eventQuery.value),
-  { default: () => [], server: false, watch: [selectedSeriesCode] },
-)
-
-const sessions = computed(() => [...(sessionsData.value ?? [])].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()))
-const events = computed(() => [...(eventsData.value ?? [])].sort((a, b) => a.roundNumber - b.roundNumber))
-const pending = computed(() => sessionsPending.value || eventsPending.value)
-const errorMessage = computed(() => sessionsError.value?.message ?? eventsError.value?.message ?? '')
+const activeSchedule = computed<ScheduleCacheEntry>(() => scheduleCache.cache.value[selectedSeriesCode.value] ?? emptySchedule)
+const hasScheduleData = computed(() => activeSchedule.value.events.length > 0 || activeSchedule.value.sessions.length > 0)
+const sessions = computed(() => activeSchedule.value.sessions)
+const events = computed(() => activeSchedule.value.events)
+const pending = computed(() => activeSchedule.value.status === 'loading' && !hasScheduleData.value)
+const isRefreshing = computed(() => activeSchedule.value.status === 'refreshing')
+const errorMessage = computed(() => hasScheduleData.value ? '' : activeSchedule.value.error)
+const refreshErrorMessage = computed(() => hasScheduleData.value ? activeSchedule.value.error : '')
 const eventByIri = computed(() => new Map(events.value.map((event) => [event['@id'], event])))
 const sessionsByEvent = computed(() => {
   const grouped = new Map<string, ApiSession[]>()
@@ -442,32 +425,20 @@ watch(selectedEvent, (event) => {
 
 watch(selectedSeriesCode, () => {
   expandedEventIds.value = new Set()
+  void scheduleCache.loadSeries(selectedSeriesCode.value)
 })
 
-function collectionMembers<T>(collection?: ApiCollection<T> | null): T[] {
-  return collection?.member ?? collection?.['hydra:member'] ?? []
-}
+onMounted(() => {
+  void scheduleCache.initialize()
+  window.addEventListener('focus', refreshSelectedSeries)
+})
 
-async function fetchCollection<T>(path: string, query: Record<string, string | number>): Promise<T[]> {
-  const results: T[] = []
-  let page = 1
-  let hasNextPage = true
+onBeforeUnmount(() => {
+  window.removeEventListener('focus', refreshSelectedSeries)
+})
 
-  while (hasNextPage) {
-    const collection = await $fetch<ApiCollection<T>>(path, {
-      baseURL: config.public.apiBase,
-      query: {
-        ...query,
-        page,
-      },
-    })
-
-    results.push(...collectionMembers(collection))
-    hasNextPage = Boolean(collection.view?.next ?? collection.view?.['hydra:next'] ?? collection['hydra:view']?.next ?? collection['hydra:view']?.['hydra:next'])
-    page += 1
-  }
-
-  return results
+function refreshSelectedSeries(): void {
+  void scheduleCache.loadSeries(selectedSeriesCode.value)
 }
 
 function getEvent(session: ApiSession): ApiEvent | undefined {
