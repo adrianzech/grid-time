@@ -33,6 +33,7 @@
     "config": {
         "allow-plugins": {
             "php-http/discovery": true,
+            "phpstan/extension-installer": true,
             "symfony/flex": true,
             "symfony/runtime": true
         },
@@ -81,12 +82,16 @@
         "phpmd": [
             "@php vendor/bin/phpmd analyze src/ --format=text --ruleset=phpmd.xml.dist"
         ],
+        "phpstan": [
+            "@php vendor/bin/phpstan analyse -c phpstan.dist.neon --memory-limit=1G"
+        ],
         "tests": [
             "@php vendor/bin/phpunit"
         ],
         "code-analysis": [
             "@cs-check",
-            "@phpmd"
+            "@phpmd",
+            "@phpstan"
         ],
         "ci-check": [
             "@code-analysis",
@@ -106,6 +111,9 @@
         "friendsofphp/php-cs-fixer": "^3.95",
         "pdepend/pdepend": "^3@dev",
         "phpmd/phpmd": "^3@dev",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan-symfony": "^2.0",
         "phpunit/phpunit": "^13.2",
         "symfony/browser-kit": "8.1.*",
         "symfony/css-selector": "8.1.*"
