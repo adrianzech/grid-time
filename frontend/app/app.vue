@@ -8,13 +8,23 @@
           <div class="flex items-center gap-3">
             <span class="text-xs font-semibold uppercase tracking-[0.26em] text-race-red">Grid Time</span>
           </div>
-          <div>
-            <h1 class="text-3xl font-black tracking-tight text-white sm:text-5xl">
-              Formula 1 Schedule
-            </h1>
-            <p class="mt-2 max-w-2xl text-sm leading-6 text-zinc-400 sm:text-base">
-              2026 race weekends, sessions, local start times and source-backed schedule data.
-            </p>
+
+          <div class="grid max-w-xl grid-cols-2 gap-2 rounded-lg border border-white/10 bg-panel p-2 shadow-2xl shadow-black/20 sm:inline-grid">
+            <button
+              v-for="series in availableSeries"
+              :key="series.code"
+              type="button"
+              class="rounded-md px-3 py-2 text-left transition hover:bg-white/[0.04]"
+              :class="series.code === selectedSeriesCode ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400'"
+              @click="selectSeries(series.code)"
+            >
+              <span class="block text-xs font-semibold uppercase tracking-[0.2em] opacity-80">
+                {{ series.code }}
+              </span>
+              <span class="mt-1 block text-lg font-black">
+                {{ series.name }}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -82,7 +92,7 @@
                 Race weekends
               </h2>
               <p class="text-sm text-zinc-500">
-                Current and upcoming Formula 1 weekends
+                Current and upcoming {{ selectedSeries.name }} weekends
               </p>
             </div>
           </div>
@@ -309,28 +319,44 @@ const config = useRuntimeConfig()
 const expandedEventIds = ref<Set<string>>(new Set())
 const currentDate = new Date()
 
-const sessionQuery = {
-  'event.season.series.code': 'F1',
+const availableSeries = [
+  {
+    code: 'F1',
+    name: 'Formula 1',
+  },
+  {
+    code: 'F2',
+    name: 'Formula 2',
+  },
+] as const
+
+type SeriesCode = typeof availableSeries[number]['code']
+
+const selectedSeriesCode = ref<SeriesCode>('F1')
+const selectedSeries = computed(() => availableSeries.find((series) => series.code === selectedSeriesCode.value) ?? availableSeries[0])
+
+const sessionQuery = computed(() => ({
+  'event.season.series.code': selectedSeriesCode.value,
   'event.season.year': seasonYear,
   'order[startsAt]': 'asc',
-}
+}))
 
-const eventQuery = {
-  'season.series.code': 'F1',
+const eventQuery = computed(() => ({
+  'season.series.code': selectedSeriesCode.value,
   'season.year': seasonYear,
   'order[roundNumber]': 'asc',
-}
+}))
 
 const { data: sessionsData, pending: sessionsPending, error: sessionsError } = await useAsyncData(
-  'formula-1-sessions',
-  () => fetchCollection<ApiSession>('/sessions', sessionQuery),
-  { default: () => [], server: false },
+  'schedule-sessions',
+  () => fetchCollection<ApiSession>('/sessions', sessionQuery.value),
+  { default: () => [], server: false, watch: [selectedSeriesCode] },
 )
 
 const { data: eventsData, pending: eventsPending, error: eventsError } = await useAsyncData(
-  'formula-1-events',
-  () => fetchCollection<ApiEvent>('/events', eventQuery),
-  { default: () => [], server: false },
+  'schedule-events',
+  () => fetchCollection<ApiEvent>('/events', eventQuery.value),
+  { default: () => [], server: false, watch: [selectedSeriesCode] },
 )
 
 const sessions = computed(() => [...(sessionsData.value ?? [])].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()))
@@ -385,6 +411,10 @@ watch(selectedEvent, (event) => {
   }
 }, { immediate: true })
 
+watch(selectedSeriesCode, () => {
+  expandedEventIds.value = new Set()
+})
+
 function collectionMembers<T>(collection?: ApiCollection<T> | null): T[] {
   return collection?.member ?? collection?.['hydra:member'] ?? []
 }
@@ -433,6 +463,10 @@ function toggleEvent(event: ApiEvent): void {
   }
 
   expandedEventIds.value = nextExpandedEventIds
+}
+
+function selectSeries(code: SeriesCode): void {
+  selectedSeriesCode.value = code
 }
 
 function isEventActive(event: ApiEvent, date: Date): boolean {
@@ -503,6 +537,10 @@ function formatDateLong(value: string): string {
 }
 
 function formatEventTitle(event: ApiEvent): string {
+  if (selectedSeriesCode.value !== 'F1') {
+    return event.name || event.location
+  }
+
   const normalizedName = event.name
     .replace(/^FORMULA 1\s+/i, '')
     .replace(/\s+2026$/i, '')
