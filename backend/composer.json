@@ -76,10 +76,10 @@
             "@auto-scripts"
         ],
         "cs-check": [
-            "@php vendor/bin/php-cs-fixer fix --dry-run --diff"
+            "@php vendor/bin/php-cs-fixer fix --dry-run --diff --sequential"
         ],
         "cs-fix": [
-            "@php vendor/bin/php-cs-fixer fix"
+            "@php vendor/bin/php-cs-fixer fix --sequential"
         ],
         "phpmd": [
             "@php vendor/bin/phpmd analyze src/ --format=text --ruleset=phpmd.xml.dist"

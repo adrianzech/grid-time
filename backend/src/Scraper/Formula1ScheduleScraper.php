@@ -17,6 +17,7 @@ final class Formula1ScheduleScraper
 {
     private const string BASE_URL = 'https://www.formula1.com';
     private const string SERIES_CODE = 'F1';
+    private const string SERIES_NAME = 'Formula 1';
 
     /**
      * @return list<RacingSession>
@@ -110,7 +111,7 @@ final class Formula1ScheduleScraper
         foreach ($this->extractMeetingSessions($html) as $session) {
             [$startsAt, $endsAt] = $this->createSessionTimes($session, $url);
 
-            $sessions[] = new RacingSession(series: self::SERIES_CODE, round: 0, eventName: $eventName, location: $location, sessionName: $session['description'], startsAt: $startsAt->setTimezone($timezone), endsAt: $endsAt?->setTimezone($timezone), sourceUrl: $url);
+            $sessions[] = new RacingSession(series: self::SERIES_CODE, seriesName: self::SERIES_NAME, round: 0, eventName: $eventName, location: $location, sessionName: $session['description'], startsAt: $startsAt->setTimezone($timezone), endsAt: $endsAt?->setTimezone($timezone), sourceUrl: $url);
         }
 
         return $sessions;
@@ -278,7 +279,7 @@ final class Formula1ScheduleScraper
 
         foreach ($raceSchedules as $index => $raceSessions) {
             foreach ($raceSessions as $session) {
-                $sessions[] = new RacingSession(series: $session->series, round: $index + 1, eventName: $session->eventName, location: $session->location, sessionName: $session->sessionName, startsAt: $session->startsAt, endsAt: $session->endsAt, sourceUrl: $session->sourceUrl);
+                $sessions[] = new RacingSession(series: $session->series, seriesName: $session->seriesName, round: $index + 1, eventName: $session->eventName, location: $session->location, sessionName: $session->sessionName, startsAt: $session->startsAt, endsAt: $session->endsAt, sourceUrl: $session->sourceUrl);
             }
         }
 

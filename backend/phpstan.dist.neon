@@ -26,6 +26,11 @@ parameters:
         - '%currentWorkingDirectory%/migrations/*'
         - '%currentWorkingDirectory%/tests/bootstrap.php'
 
+    ignoreErrors:
+        -
+            identifier: property.onlyRead
+            path: '%currentWorkingDirectory%/src/Entity/*'
+
     # PHPStan caches results for faster subsequent runs
     # Cache directory, typically inside %tmpDir%
     # Add '.phpstan_cache' to your .gitignore if it uses the default tmp location relative to CWD

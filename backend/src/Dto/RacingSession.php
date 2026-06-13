@@ -10,6 +10,7 @@ final readonly class RacingSession
 {
     public function __construct(
         public string $series,
+        public string $seriesName,
         public int $round,
         public string $eventName,
         public string $location,

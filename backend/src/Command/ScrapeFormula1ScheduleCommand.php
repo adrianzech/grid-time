@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Importer\SchedulePersister;
 use App\Scraper\Formula1ScheduleScraper;
 use DateTimeZone;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -21,8 +22,10 @@ use Throwable;
 )]
 final class ScrapeFormula1ScheduleCommand extends Command
 {
-    public function __construct(private readonly Formula1ScheduleScraper $scraper)
-    {
+    public function __construct(
+        private readonly Formula1ScheduleScraper $scraper,
+        private readonly SchedulePersister $schedulePersister,
+    ) {
         parent::__construct();
     }
 
@@ -47,7 +50,8 @@ final class ScrapeFormula1ScheduleCommand extends Command
 
         try {
             $timezone = new DateTimeZone((string) $input->getOption('timezone'));
-            $sessions = $this->scraper->scrape($year, $timezone);
+            $sessions = $this->scraper->scrape($year, new DateTimeZone('UTC'));
+            $persistedSessions = $this->schedulePersister->persist($year, $sessions);
         } catch (Throwable $exception) {
             $io->error($exception->getMessage());
 
@@ -64,20 +68,24 @@ final class ScrapeFormula1ScheduleCommand extends Command
         $table->setHeaders(['Series', 'Round', 'Event', 'Session', 'Date', 'Start', 'End', 'TZ']);
 
         foreach ($sessions as $session) {
+            $startsAt = $session->startsAt->setTimezone($timezone);
+            $endsAt = $session->endsAt?->setTimezone($timezone);
+
             $table->addRow([
                 $session->series,
                 (string) $session->round,
                 $session->location,
                 $session->sessionName,
-                $session->startsAt->format('Y-m-d'),
-                $session->startsAt->format('H:i'),
-                $session->endsAt?->format('H:i') ?? '',
+                $startsAt->format('Y-m-d'),
+                $startsAt->format('H:i'),
+                $endsAt?->format('H:i') ?? '',
                 $timezone->getName(),
             ]);
         }
 
         $io->title(sprintf('Formula 1 %d session schedule', $year));
         $table->render();
+        $io->success(sprintf('Persisted %d sessions to the database.', $persistedSessions));
         $io->text(sprintf('Source: https://www.formula1.com/en/racing/%d', $year));
 
         return Command::SUCCESS;
