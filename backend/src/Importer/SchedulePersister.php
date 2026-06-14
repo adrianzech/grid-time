@@ -22,6 +22,7 @@ final readonly class SchedulePersister
 
     /**
      * @param list<RacingSession> $sessions
+     *
      * @throws DateMalformedStringException
      */
     public function persist(int $year, array $sessions): int
