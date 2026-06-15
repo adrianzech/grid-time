@@ -14,8 +14,8 @@
               v-for="series in availableSeries"
               :key="series.code"
               type="button"
-              class="rounded-md px-3 py-2 text-left transition hover:bg-white/4"
-              :class="series.code === selectedSeriesCode ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400'"
+              class="rounded-md px-3 py-2 text-left transition"
+              :class="series.code === selectedSeriesCode ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
               @click="selectSeries(series.code)"
             >
               <span class="block text-xs font-semibold uppercase tracking-[0.2em] opacity-80">
