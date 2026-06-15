@@ -9,7 +9,7 @@
             <span class="text-xs font-semibold uppercase tracking-[0.26em] text-race-red">Grid Time</span>
           </div>
 
-          <div class="grid max-w-xl grid-cols-2 gap-2 rounded-lg border border-white/10 bg-panel p-2 shadow-2xl shadow-black/20 sm:inline-grid">
+          <div class="grid max-w-2xl grid-cols-3 gap-2 rounded-lg border border-white/10 bg-panel p-2 shadow-2xl shadow-black/20 sm:inline-grid">
             <button
               v-for="series in availableSeries"
               :key="series.code"
@@ -21,7 +21,7 @@
               <span class="block text-xs font-semibold uppercase tracking-[0.2em] opacity-80">
                 {{ series.code }}
               </span>
-              <span class="mt-1 block text-lg font-black">
+              <span class="mt-1 block text-base font-black sm:text-lg">
                 {{ series.name }}
               </span>
             </button>
@@ -338,6 +338,10 @@ const availableSeries = [
   {
     code: 'F2',
     name: 'Formula 2',
+  },
+  {
+    code: 'F3',
+    name: 'Formula 3',
   },
 ] as const
 
