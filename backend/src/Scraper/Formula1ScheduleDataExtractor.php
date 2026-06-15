@@ -101,8 +101,10 @@ final readonly class Formula1ScheduleDataExtractor
 
     private function jsonStringValue(string $html, string $key): ?string
     {
-        if (array_any([$html, stripcslashes($html)], fn ($source) => preg_match('/"' . preg_quote($key, '/') . '"\s*:\s*"(?<value>[^"]+)"/', $source, $matches))) {
-            return $this->normalizeText($matches['value']);
+        foreach ([$html, stripcslashes($html)] as $source) {
+            if (preg_match('/"' . preg_quote($key, '/') . '"\s*:\s*"(?<value>[^"]+)"/', $source, $matches) === 1) {
+                return $this->normalizeText($matches['value']);
+            }
         }
 
         return null;
