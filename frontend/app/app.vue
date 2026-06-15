@@ -417,15 +417,12 @@ const nextSession = computed(() => highlightedSession.value)
 
 const nextSessionEvent = computed(() => nextSession.value ? getEvent(nextSession.value) : null)
 
-watch(upcomingEvents, (events) => {
-  if (events[0] && !expandedEventIds.value.size) {
-    expandedEventIds.value = new Set([events[0]['@id']])
-  }
-}, { immediate: true })
+watch(upcomingEvents, expandFirstUpcomingEvent, { immediate: true })
 
 watch(selectedSeriesCode, () => {
   expandedEventIds.value = new Set()
   void scheduleCache.loadSeries(selectedSeriesCode.value)
+  void nextTick(expandFirstUpcomingEvent)
 })
 
 onMounted(() => {
@@ -447,6 +444,14 @@ function getEvent(session: ApiSession): ApiEvent | undefined {
 
 function eventSessions(event: ApiEvent): ApiSession[] {
   return sessionsByEvent.value.get(event['@id']) ?? []
+}
+
+function expandFirstUpcomingEvent(): void {
+  const event = upcomingEvents.value[0]
+
+  if (event && !expandedEventIds.value.size) {
+    expandedEventIds.value = new Set([event['@id']])
+  }
 }
 
 function isEventExpanded(event: ApiEvent): boolean {
