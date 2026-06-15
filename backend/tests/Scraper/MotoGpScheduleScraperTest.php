@@ -50,7 +50,7 @@ final class MotoGpScheduleScraperTest extends TestCase
         self::assertSame('MGP', $motogpSessions[0]->series);
         self::assertSame('MotoGP', $motogpSessions[0]->seriesName);
         self::assertSame(1, $motogpSessions[0]->round);
-        self::assertSame('THAILAND', $motogpSessions[0]->eventName);
+        self::assertSame('Thailand', $motogpSessions[0]->eventName);
         self::assertSame('Chang International Circuit', $motogpSessions[0]->location);
         self::assertSame('Free Practice Nr. 1', $motogpSessions[0]->sessionName);
         self::assertSame('2026-02-27 03:45:00', $motogpSessions[0]->startsAt->format('Y-m-d H:i:s'));
@@ -59,6 +59,7 @@ final class MotoGpScheduleScraperTest extends TestCase
         self::assertSame('https://www.motogp.com/en/calendar/2026', $motogpSessions[0]->sourceUrl);
 
         self::assertSame('Grand Prix', $motogpSessions[2]->sessionName);
+        self::assertSame('Brazil', $motogpSessions[2]->eventName);
         self::assertSame('2026-03-22 18:00:00', $motogpSessions[2]->startsAt->format('Y-m-d H:i:s'));
         self::assertSame('-03:00', $motogpSessions[2]->trackTimezoneOffset);
 

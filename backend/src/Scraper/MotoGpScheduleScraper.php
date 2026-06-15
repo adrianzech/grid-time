@@ -70,7 +70,7 @@ final readonly class MotoGpScheduleScraper
     private function sessionsFromEvent(array $event, string $categoryCode, string $seriesName, int $year): array
     {
         $round = $this->intValue($event['sequence'] ?? null);
-        $eventName = $this->stringValue($event['additional_name'] ?? null) ?? $this->stringValue($event['name'] ?? null);
+        $eventName = $this->displayName($event['additional_name'] ?? null) ?? $this->displayName($event['name'] ?? null);
         $location = $this->stringValue($event['circuit']['name'] ?? null)
             ?? $this->stringValue($event['country'] ?? null)
             ?? $eventName;
@@ -169,6 +169,25 @@ final readonly class MotoGpScheduleScraper
         $value = trim($value);
 
         return $value === '' ? null : $value;
+    }
+
+    private function displayName(mixed $value): ?string
+    {
+        $value = $this->stringValue($value);
+
+        if ($value === null || preg_match('/[a-z]/', $value) === 1) {
+            return $value;
+        }
+
+        if (in_array($value, ['UK', 'USA', 'UAE'], true)) {
+            return $value;
+        }
+
+        return str_replace(
+            [' Gp', ' Of '],
+            [' GP', ' of '],
+            ucwords(strtolower($value)),
+        );
     }
 
     private function intValue(mixed $value): ?int
