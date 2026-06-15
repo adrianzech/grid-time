@@ -9,7 +9,7 @@
             <span class="text-xs font-semibold uppercase tracking-[0.26em] text-race-red">Grid Time</span>
           </div>
 
-          <div class="grid max-w-2xl grid-cols-3 gap-2 rounded-lg border border-white/10 bg-panel p-2 shadow-2xl shadow-black/20 sm:inline-grid">
+          <div class="grid max-w-5xl grid-cols-2 gap-2 rounded-lg border border-white/10 bg-panel p-2 shadow-2xl shadow-black/20 sm:grid-cols-3 xl:inline-grid xl:grid-cols-6">
             <button
               v-for="series in availableSeries"
               :key="series.code"
@@ -342,6 +342,18 @@ const availableSeries = [
   {
     code: 'F3',
     name: 'Formula 3',
+  },
+  {
+    code: 'MGP',
+    name: 'MotoGP',
+  },
+  {
+    code: 'MT2',
+    name: 'Moto2',
+  },
+  {
+    code: 'MT3',
+    name: 'Moto3',
   },
 ] as const
 
