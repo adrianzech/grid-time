@@ -535,62 +535,7 @@ function formatSessionDateLong(session: ApiSession): string {
 }
 
 function formatEventTitle(event: ApiEvent): string {
-  if (selectedSeriesCode.value !== 'F1') {
-    return event.name || event.location
-  }
-
-  const normalizedName = event.name
-    .replace(/^FORMULA 1\s+/i, '')
-    .replace(/\s+2026$/i, '')
-    .trim()
-
-  const spanishGrandPrix = normalizedName.match(/GRAN PREMIO DE\s+(.+)$/i)
-
-  // noinspection SpellCheckingInspection
-  if (spanishGrandPrix?.[1]) {
-    return `${titleCase(spanishGrandPrix[1])} Grand Prix`
-  }
-
-  const grandPrix = normalizedName.match(/([A-ZÀ-Ý][A-ZÀ-Ý\s&'.-]+)\s+GRAND PRIX$/i)
-
-  // noinspection SpellCheckingInspection
-  if (grandPrix?.[1]) {
-    return `${titleCase(stripSponsorPrefix(grandPrix[1]))} Grand Prix`
-  }
-
-  // noinspection SpellCheckingInspection
-  return `${event.location} Grand Prix`
-}
-
-function stripSponsorPrefix(value: string): string {
-  // noinspection SpellCheckingInspection
-  const sponsorPrefixes = [
-    'QATAR AIRWAYS',
-    'HEINEKEN',
-    'ARAMCO',
-    'CRYPTO.COM',
-    'LENOVO',
-    'LOUIS VUITTON',
-    'MSC CRUISES',
-    'PIRELLI',
-    'MOET & CHANDON',
-    'MOËT & CHANDON',
-    'AWS',
-    'TAG HEUER',
-    'ETIHAD AIRWAYS',
-  ]
-
-  return sponsorPrefixes.reduce((result, sponsor) => result.replace(new RegExp(`^${escapeRegExp(sponsor)}\\s+`, 'i'), ''), value).trim()
-}
-
-function titleCase(value: string): string {
-  return value
-    .toLocaleLowerCase()
-    .replace(/(^|[\s-])\p{L}/gu, (match) => match.toLocaleUpperCase())
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return event.name || event.location
 }
 
 function eventNextSessionLabel(event: ApiEvent): string {
