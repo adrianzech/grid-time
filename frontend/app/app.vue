@@ -417,9 +417,9 @@ const nextSession = computed(() => highlightedSession.value)
 
 const nextSessionEvent = computed(() => nextSession.value ? getEvent(nextSession.value) : null)
 
-watch(selectedEvent, (event) => {
-  if (event && !expandedEventIds.value.size) {
-    expandedEventIds.value = new Set([event['@id']])
+watch(upcomingEvents, (events) => {
+  if (events[0] && !expandedEventIds.value.size) {
+    expandedEventIds.value = new Set([events[0]['@id']])
   }
 }, { immediate: true })
 
