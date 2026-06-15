@@ -33,6 +33,18 @@ final readonly class Formula1ScheduleDataExtractor
         return ucwords(str_replace('-', ' ', $slug));
     }
 
+    public function countryName(string $html, string $url): string
+    {
+        return $this->jsonStringValue($html, 'meetingCountryName') ?? $this->locationFromUrl($url);
+    }
+
+    public function circuitName(string $html): ?string
+    {
+        return $this->jsonStringValue($html, 'circuitOfficialName')
+            ?? $this->jsonStringValue($html, 'circuitShortName')
+            ?? $this->jsonStringValue($html, 'circuitLocation');
+    }
+
     /**
      * @return list<array{description: string, startTime: string, endTime?: string, gmtOffset: string}>
      */
@@ -85,6 +97,15 @@ final readonly class Formula1ScheduleDataExtractor
     private function normalizeText(string $text): string
     {
         return trim((string) preg_replace('/\s+/', ' ', html_entity_decode($text, ENT_QUOTES | ENT_HTML5)));
+    }
+
+    private function jsonStringValue(string $html, string $key): ?string
+    {
+        if (array_any([$html, stripcslashes($html)], fn($source) => preg_match('/"' . preg_quote($key, '/') . '"\s*:\s*"(?<value>[^"]+)"/', $source, $matches))) {
+            return $this->normalizeText($matches['value']);
+        }
+
+        return null;
     }
 
     private function extractJsonArrayAfterKey(string $html): ?string

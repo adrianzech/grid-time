@@ -106,8 +106,8 @@ final class Formula1ScheduleScraper
     private function scrapeRace(string $url): array
     {
         $html = $this->fetch($url);
-        $eventName = $this->extractor->eventName($html) ?? 'Unknown Grand Prix';
-        $location = $this->extractor->locationFromUrl($url);
+        $eventName = $this->extractor->countryName($html, $url);
+        $location = $this->extractor->circuitName($html) ?? $this->extractor->locationFromUrl($url);
         $sessions = [];
 
         foreach ($this->extractor->meetingSessions($html) as $session) {
