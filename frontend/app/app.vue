@@ -9,22 +9,39 @@
             <span class="text-xs font-semibold uppercase tracking-[0.26em] text-race-red">Grid Time</span>
           </div>
 
-          <div class="grid max-w-5xl grid-cols-2 gap-2 rounded-lg border border-white/10 bg-panel p-2 shadow-2xl shadow-black/20 sm:grid-cols-3 xl:inline-grid xl:grid-cols-6">
-            <button
-              v-for="series in availableSeries"
-              :key="series.code"
-              type="button"
-              class="rounded-md px-3 py-2 text-left transition"
-              :class="series.code === selectedSeriesCode ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
-              @click="selectSeries(series.code)"
-            >
-              <span class="block text-xs font-semibold uppercase tracking-[0.2em] opacity-80">
-                {{ series.code }}
-              </span>
-              <span class="mt-1 block text-base font-black sm:text-lg">
-                {{ series.name }}
-              </span>
-            </button>
+          <div class="max-w-5xl rounded-lg border border-white/10 bg-panel p-2 shadow-2xl shadow-black/20">
+            <div class="grid grid-cols-3 gap-1 rounded-md bg-black/20 p-1">
+              <button
+                v-for="category in seriesCategories"
+                :key="category"
+                type="button"
+                class="rounded px-3 py-2 text-sm font-bold transition"
+                :class="category === selectedCategory ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
+                :aria-pressed="category === selectedCategory"
+                @click="selectCategory(category)"
+              >
+                {{ category }}
+              </button>
+            </div>
+
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button
+                v-for="series in visibleSeries"
+                :key="series.code"
+                type="button"
+                class="min-w-32 flex-1 rounded-md px-3 py-2 text-left transition sm:flex-none"
+                :class="series.code === selectedSeriesCode ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
+                :aria-pressed="series.code === selectedSeriesCode"
+                @click="selectSeries(series.code)"
+              >
+                <span class="block text-xs font-semibold uppercase tracking-[0.2em] opacity-80">
+                  {{ series.code }}
+                </span>
+                <span class="mt-1 block text-base font-black sm:text-lg">
+                  {{ series.name }}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -330,34 +347,45 @@ const seasonYear = 2026
 const expandedEventIds = ref<Set<string>>(new Set())
 const currentDate = new Date()
 
+const seriesCategories = ['Formula', 'Moto', 'Superbike'] as const
+
+type SeriesCategory = typeof seriesCategories[number]
+
 const availableSeries = [
   {
     code: 'F1',
     name: 'Formula 1',
+    category: 'Formula',
   },
   {
     code: 'F2',
     name: 'Formula 2',
+    category: 'Formula',
   },
   {
     code: 'F3',
     name: 'Formula 3',
+    category: 'Formula',
   },
   {
     code: 'MGP',
     name: 'MotoGP',
+    category: 'Moto',
   },
   {
     code: 'MT2',
     name: 'Moto2',
+    category: 'Moto',
   },
   {
     code: 'MT3',
     name: 'Moto3',
+    category: 'Moto',
   },
   {
     code: 'SBK',
     name: 'WorldSBK',
+    category: 'Superbike',
   },
 ] as const
 
@@ -365,6 +393,13 @@ type SeriesCode = typeof availableSeries[number]['code']
 type TimeMode = 'local' | 'track'
 
 const selectedSeriesCode = ref<SeriesCode>('F1')
+const selectedCategory = ref<SeriesCategory>('Formula')
+const selectedSeriesByCategory = reactive<Record<SeriesCategory, SeriesCode>>({
+  Formula: 'F1',
+  Moto: 'MGP',
+  Superbike: 'SBK',
+})
+const visibleSeries = computed(() => availableSeries.filter((series) => series.category === selectedCategory.value))
 const selectedSeries = computed(() => availableSeries.find((series) => series.code === selectedSeriesCode.value) ?? availableSeries[0])
 const timeMode = ref<TimeMode>('local')
 const scheduleCache = useScheduleCache(availableSeries.map((series) => series.code), 'F1', seasonYear)
@@ -492,6 +527,18 @@ function toggleEvent(event: ApiEvent): void {
 
 function selectSeries(code: SeriesCode): void {
   selectedSeriesCode.value = code
+
+  const series = availableSeries.find((candidate) => candidate.code === code)
+
+  if (series) {
+    selectedCategory.value = series.category
+    selectedSeriesByCategory[series.category] = code
+  }
+}
+
+function selectCategory(category: SeriesCategory): void {
+  selectedCategory.value = category
+  selectedSeriesCode.value = selectedSeriesByCategory[category]
 }
 
 function selectTimeMode(mode: TimeMode): void {
