@@ -355,6 +355,10 @@ const availableSeries = [
     code: 'MT3',
     name: 'Moto3',
   },
+  {
+    code: 'SBK',
+    name: 'WorldSBK',
+  },
 ] as const
 
 type SeriesCode = typeof availableSeries[number]['code']
