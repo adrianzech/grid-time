@@ -43,7 +43,7 @@
             </span>
             <span
               class="mt-5 block truncate text-lg font-black text-white"
-              :title="item.event.name"
+              :title="formatEventTitle(item.event)"
             >
               {{ formatEventTitle(item.event) }}
             </span>
@@ -273,7 +273,7 @@
                     <span class="flex min-w-0 flex-wrap items-center gap-2">
                       <span
                         class="truncate text-xl font-black text-white"
-                        :title="event.name"
+                        :title="formatEventTitle(event)"
                       >
                         {{ formatEventTitle(event) }}
                       </span>
@@ -764,7 +764,11 @@ function formatSessionDateLong(session: ApiSession): string {
 }
 
 function formatEventTitle(event: ApiEvent): string {
-  return event.name || event.location
+  const title = event.countryName || event.name || event.location
+
+  return title === title.toUpperCase()
+    ? title.toLocaleLowerCase().replace(/\b\w/g, (character) => character.toLocaleUpperCase())
+    : title
 }
 
 function eventNextSessionLabel(event: ApiEvent): string {

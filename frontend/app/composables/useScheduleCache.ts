@@ -23,6 +23,7 @@ export type ApiEvent = {
   'id': number
   'roundNumber': number
   'name': string
+  'countryName': string
   'location': string
   'sourceUrl': string
 }
