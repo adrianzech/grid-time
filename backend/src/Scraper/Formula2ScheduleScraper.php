@@ -6,6 +6,7 @@ namespace App\Scraper;
 
 use App\Dto\RacingSession;
 use App\Dto\RacingSessionTiming;
+use App\Service\CountryNameNormalizer;
 use Closure;
 use DateTimeZone;
 use RuntimeException;
@@ -18,9 +19,12 @@ final readonly class Formula2ScheduleScraper
 
     private Formula2ScheduleDataExtractor $extractor;
 
-    public function __construct(private ?Closure $fetcher = null, ?Formula2ScheduleDataExtractor $extractor = null)
+    private CountryNameNormalizer $countryNameNormalizer;
+
+    public function __construct(private ?Closure $fetcher = null, ?Formula2ScheduleDataExtractor $extractor = null, ?CountryNameNormalizer $countryNameNormalizer = null)
     {
         $this->extractor = $extractor ?? new Formula2ScheduleDataExtractor();
+        $this->countryNameNormalizer = $countryNameNormalizer ?? new CountryNameNormalizer();
     }
 
     /**
@@ -197,6 +201,7 @@ final readonly class Formula2ScheduleScraper
                 seriesName: self::SERIES_NAME,
                 round: $race['roundNumber'],
                 eventName: $eventName,
+                countryName: $this->countryNameNormalizer->normalize($eventName),
                 location: $location,
                 sessionName: $sessionName,
                 timing: new RacingSessionTiming(startsAt: $startsAt->setTimezone(new DateTimeZone('UTC')), endsAt: $endsAt?->setTimezone(new DateTimeZone('UTC')), trackTimezoneOffset: $trackTimezoneOffset),

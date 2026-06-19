@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c52c3d0cf7f86b7d73944184d28f9488",
+    "content-hash": "5f7bf578e462e6aa4d7cba66627a08bd",
     "packages": [
         {
             "name": "api-platform/doctrine-common",
@@ -3037,6 +3037,89 @@
                 "source": "https://github.com/php-fig/log/tree/3.0.2"
             },
             "time": "2024-09-11T13:17:53+00:00"
+        },
+        {
+            "name": "rinvex/countries",
+            "version": "v9.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rinvex/countries.git",
+                "reference": "7ece458023997be0a1ea2b547b3919818b70a6c1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rinvex/countries/zipball/7ece458023997be0a1ea2b547b3919818b70a6c1",
+                "reference": "7ece458023997be0a1ea2b547b3919818b70a6c1",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.2.0"
+            },
+            "require-dev": {
+                "codedungeon/phpunit-result-printer": "^0.32.0",
+                "phpunit/phpunit": "^10.1.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Rinvex\\Country\\Providers\\CountryServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Rinvex\\Country\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Rinvex LLC",
+                    "email": "help@rinvex.com",
+                    "homepage": "https://rinvex.com"
+                },
+                {
+                    "name": "Abdelrahman Omran",
+                    "email": "me@omranic.com",
+                    "homepage": "https://omranic.com",
+                    "role": "Project Lead"
+                },
+                {
+                    "name": "The Generous PHP Community",
+                    "homepage": "https://github.com/rinvex/countries/contributors"
+                }
+            ],
+            "description": "Rinvex Countries is a simple and lightweight package for retrieving country details with flexibility. A whole bunch of data including name, demonym, capital, iso codes, dialling codes, geo data, currencies, flags, emoji, and other attributes for all 250 countries worldwide at your fingertips.",
+            "homepage": "https://rinvex.com",
+            "keywords": [
+                "Flexible",
+                "Simple",
+                "countries",
+                "country",
+                "currencies",
+                "demonym",
+                "dialling",
+                "emoji",
+                "flags",
+                "geographic",
+                "languages",
+                "rinvex",
+                "svg"
+            ],
+            "support": {
+                "docs": "https://github.com/rinvex/countries/blob/master/README.md",
+                "email": "help@rinvex.com",
+                "issues": "https://github.com/rinvex/countries/issues",
+                "source": "https://github.com/rinvex/countries"
+            },
+            "time": "2025-07-14T13:27:15+00:00"
         },
         {
             "name": "symfony/asset",
@@ -11031,9 +11114,11 @@
     "platform": {
         "php": ">=8.5",
         "ext-ctype": "*",
-        "ext-iconv": "*",
         "ext-dom": "*",
-        "ext-libxml": "*"
+        "ext-iconv": "*",
+        "ext-intl": "*",
+        "ext-libxml": "*",
+        "ext-mbstring": "*"
     },
     "platform-dev": {},
     "plugin-api-version": "2.9.0"

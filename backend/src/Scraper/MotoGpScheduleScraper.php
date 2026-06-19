@@ -6,10 +6,13 @@ namespace App\Scraper;
 
 use App\Dto\RacingSession;
 use App\Dto\RacingSessionTiming;
+use App\Service\CountryNameNormalizer;
+use App\Service\CountryNameResolver;
 use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
 use JsonException;
+use Rinvex\Country\CountryLoaderException;
 use RuntimeException;
 use Throwable;
 
@@ -20,12 +23,20 @@ final readonly class MotoGpScheduleScraper
     private const string EVENT_KIND_GP = 'GP';
     private const string BROADCAST_TYPE_SESSION = 'SESSION';
 
-    public function __construct(private ?Closure $fetcher = null)
+    private CountryNameResolver $countryNameResolver;
+
+    private CountryNameNormalizer $countryNameNormalizer;
+
+    public function __construct(private ?Closure $fetcher = null, ?CountryNameResolver $countryNameResolver = null, ?CountryNameNormalizer $countryNameNormalizer = null)
     {
+        $this->countryNameResolver = $countryNameResolver ?? new CountryNameResolver();
+        $this->countryNameNormalizer = $countryNameNormalizer ?? new CountryNameNormalizer();
     }
 
     /**
      * @return list<RacingSession>
+     *
+     * @throws CountryLoaderException
      */
     public function scrape(int $year, string $categoryCode, string $seriesName): array
     {
@@ -66,17 +77,27 @@ final readonly class MotoGpScheduleScraper
      * @param array<string, mixed> $event
      *
      * @return list<RacingSession>
+     *
+     * @throws CountryLoaderException
      */
     private function sessionsFromEvent(array $event, string $categoryCode, string $seriesName, int $year): array
     {
         $round = $this->intValue($event['sequence'] ?? null);
         $eventName = $this->displayName($event['additional_name'] ?? null) ?? $this->displayName($event['name'] ?? null);
+        $countryCode = $this->stringValue($event['country'] ?? null);
+
+        if ($eventName === null) {
+            return [];
+        }
+
+        $countryName = $countryCode === null
+            ? $this->countryNameNormalizer->normalize($eventName)
+            : $this->countryNameResolver->resolve($countryCode) ?? $this->countryNameNormalizer->normalize($eventName);
         $location = $this->stringValue($event['circuit']['name'] ?? null)
-            ?? $this->stringValue($event['country'] ?? null)
-            ?? $eventName;
+            ?? $countryName;
         $broadcasts = $event['broadcasts'] ?? null;
 
-        if ($round === null || $eventName === null || $location === null || !is_array($broadcasts)) {
+        if ($round === null || !is_array($broadcasts)) {
             return [];
         }
 
@@ -84,7 +105,7 @@ final readonly class MotoGpScheduleScraper
 
         foreach ($broadcasts as $broadcast) {
             $session = is_array($broadcast)
-                ? $this->sessionFromBroadcast($broadcast, $categoryCode, $seriesName, $round, $eventName, $location, $year)
+                ? $this->sessionFromBroadcast($broadcast, $categoryCode, $seriesName, $round, $eventName, $countryName, $location, $year)
                 : null;
 
             if ($session instanceof RacingSession) {
@@ -100,7 +121,7 @@ final readonly class MotoGpScheduleScraper
     /**
      * @param array<string, mixed> $broadcast
      */
-    private function sessionFromBroadcast(array $broadcast, string $categoryCode, string $seriesName, int $round, string $eventName, string $location, int $year): ?RacingSession
+    private function sessionFromBroadcast(array $broadcast, string $categoryCode, string $seriesName, int $round, string $eventName, string $countryName, string $location, int $year): ?RacingSession
     {
         if (!$this->isSessionForCategory($broadcast, $categoryCode)) {
             return null;
@@ -121,6 +142,7 @@ final readonly class MotoGpScheduleScraper
             seriesName: $seriesName,
             round: $round,
             eventName: $eventName,
+            countryName: $countryName,
             location: $location,
             sessionName: $sessionName,
             timing: new RacingSessionTiming(startsAt: $startsAt->setTimezone(new DateTimeZone('UTC')), endsAt: $endsAt?->setTimezone(new DateTimeZone('UTC')), trackTimezoneOffset: $this->extractTimezoneOffset($sessionStartTime)),

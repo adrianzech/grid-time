@@ -13,6 +13,7 @@ final readonly class RacingSession
         public string $seriesName,
         public int $round,
         public string $eventName,
+        public string $countryName,
         public string $location,
         public string $sessionName,
         RacingSessionTiming $timing,

@@ -93,7 +93,7 @@ final readonly class SchedulePersister
     {
         if (isset($eventsByRound[$session->round])) {
             $event = $eventsByRound[$session->round];
-            $event->updateFromSchedule($session->eventName, $session->location, $session->sourceUrl);
+            $event->updateFromSchedule($session->eventName, $session->countryName, $session->location, $session->sourceUrl);
 
             return $event;
         }
@@ -104,7 +104,7 @@ final readonly class SchedulePersister
         ]);
 
         if ($event instanceof Event) {
-            $event->updateFromSchedule($session->eventName, $session->location, $session->sourceUrl);
+            $event->updateFromSchedule($session->eventName, $session->countryName, $session->location, $session->sourceUrl);
             $eventsByRound[$session->round] = $event;
 
             return $event;
@@ -114,6 +114,7 @@ final readonly class SchedulePersister
             season: $season,
             roundNumber: $session->round,
             name: $session->eventName,
+            countryName: $session->countryName,
             location: $session->location,
             sourceUrl: $session->sourceUrl,
         );

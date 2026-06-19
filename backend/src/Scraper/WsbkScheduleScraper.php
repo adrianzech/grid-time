@@ -6,10 +6,13 @@ namespace App\Scraper;
 
 use App\Dto\RacingSession;
 use App\Dto\RacingSessionTiming;
+use App\Service\CountryNameNormalizer;
+use App\Service\CountryNameResolver;
 use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
 use JsonException;
+use Rinvex\Country\CountryLoaderException;
 use RuntimeException;
 use Throwable;
 
@@ -20,12 +23,20 @@ final readonly class WsbkScheduleScraper
     private const string CATEGORY_CODE = 'SBK';
     private const string SERIES_NAME = 'WorldSBK';
 
-    public function __construct(private ?Closure $fetcher = null)
+    private CountryNameResolver $countryNameResolver;
+
+    private CountryNameNormalizer $countryNameNormalizer;
+
+    public function __construct(private ?Closure $fetcher = null, ?CountryNameResolver $countryNameResolver = null, ?CountryNameNormalizer $countryNameNormalizer = null)
     {
+        $this->countryNameResolver = $countryNameResolver ?? new CountryNameResolver();
+        $this->countryNameNormalizer = $countryNameNormalizer ?? new CountryNameNormalizer();
     }
 
     /**
      * @return list<RacingSession>
+     *
+     * @throws CountryLoaderException
      */
     public function scrape(int $year): array
     {
@@ -49,6 +60,8 @@ final readonly class WsbkScheduleScraper
      * @param array<string, mixed> $round
      *
      * @return list<RacingSession>
+     *
+     * @throws CountryLoaderException
      */
     private function sessionsFromRound(array $round, int $year): array
     {
@@ -67,11 +80,18 @@ final readonly class WsbkScheduleScraper
             return [];
         }
 
-        $data = $this->fetchData(sprintf('%s/seasons/%d/rounds/%s/sessions', self::API_URL, $year, rawurlencode($roundId)), 'sessions');
+        $countryCode = $this->stringValue($attributes['country_iso'] ?? null) ?? $roundId;
+        $countryName = $this->countryNameResolver->resolve($countryCode)
+            ?? $this->countryNameNormalizer->normalize($eventName);
+
+        $data = $this->fetchData(
+            sprintf('%s/seasons/%d/rounds/%s/sessions', self::API_URL, $year, rawurlencode($roundId)),
+            'sessions',
+        );
         $sessions = [];
 
         foreach ($data as $session) {
-            $racingSession = $this->sessionFromData($session, $year, $roundId, $roundNumber, $eventName, $location);
+            $racingSession = $this->sessionFromData($session, $year, $roundId, $roundNumber, $eventName, $countryName, $location);
 
             if ($racingSession instanceof RacingSession) {
                 $sessions[] = $racingSession;
@@ -84,7 +104,7 @@ final readonly class WsbkScheduleScraper
     /**
      * @param array<string, mixed> $session
      */
-    private function sessionFromData(array $session, int $year, string $roundId, int $roundNumber, string $eventName, string $location): ?RacingSession
+    private function sessionFromData(array $session, int $year, string $roundId, int $roundNumber, string $eventName, string $countryName, string $location): ?RacingSession
     {
         if (($session['relationships']['category']['data']['id'] ?? null) !== self::CATEGORY_CODE) {
             return null;
@@ -111,6 +131,7 @@ final readonly class WsbkScheduleScraper
             seriesName: self::SERIES_NAME,
             round: $roundNumber,
             eventName: $eventName,
+            countryName: $countryName,
             location: $location,
             sessionName: $sessionName,
             timing: new RacingSessionTiming(

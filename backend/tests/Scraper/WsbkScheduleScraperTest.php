@@ -47,6 +47,7 @@ final class WsbkScheduleScraperTest extends TestCase
         self::assertSame('WorldSBK', $sessions[0]->seriesName);
         self::assertSame(1, $sessions[0]->round);
         self::assertSame('Australian Round', $sessions[0]->eventName);
+        self::assertSame('Australia', $sessions[0]->countryName);
         self::assertSame('Phillip Island Grand Prix Circuit', $sessions[0]->location);
         self::assertSame('Free Practice 1st Session', $sessions[0]->sessionName);
         self::assertSame('2026-02-20 00:20:00', $sessions[0]->startsAt->format('Y-m-d H:i:s'));
@@ -57,6 +58,7 @@ final class WsbkScheduleScraperTest extends TestCase
         self::assertSame('Race 1', $sessions[1]->sessionName);
         self::assertSame('Race 2', $sessions[2]->sessionName);
         self::assertSame(2, $sessions[2]->round);
+        self::assertSame('Portugal', $sessions[2]->countryName);
         self::assertSame('+01:00', $sessions[2]->trackTimezoneOffset);
     }
 

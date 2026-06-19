@@ -6,6 +6,7 @@ namespace App\Scraper;
 
 use App\Dto\RacingSession;
 use App\Dto\RacingSessionTiming;
+use App\Service\CountryNameNormalizer;
 use DateTimeZone;
 use RuntimeException;
 
@@ -17,9 +18,12 @@ final class Formula1ScheduleScraper
 
     private Formula1ScheduleDataExtractor $extractor;
 
-    public function __construct(?Formula1ScheduleDataExtractor $extractor = null)
+    private CountryNameNormalizer $countryNameNormalizer;
+
+    public function __construct(?Formula1ScheduleDataExtractor $extractor = null, ?CountryNameNormalizer $countryNameNormalizer = null)
     {
         $this->extractor = $extractor ?? new Formula1ScheduleDataExtractor();
+        $this->countryNameNormalizer = $countryNameNormalizer ?? new CountryNameNormalizer();
     }
 
     /**
@@ -113,7 +117,7 @@ final class Formula1ScheduleScraper
         foreach ($this->extractor->meetingSessions($html) as $session) {
             [$startsAt, $endsAt] = $this->extractor->sessionTimes($session, $url);
 
-            $sessions[] = new RacingSession(series: self::SERIES_CODE, seriesName: self::SERIES_NAME, round: 0, eventName: $eventName, location: $location, sessionName: $session['description'], timing: new RacingSessionTiming(startsAt: $startsAt->setTimezone(new DateTimeZone('UTC')), endsAt: $endsAt?->setTimezone(new DateTimeZone('UTC')), trackTimezoneOffset: $session['gmtOffset']), sourceUrl: $url);
+            $sessions[] = new RacingSession(series: self::SERIES_CODE, seriesName: self::SERIES_NAME, round: 0, eventName: $eventName, countryName: $this->countryNameNormalizer->normalize($eventName), location: $location, sessionName: $session['description'], timing: new RacingSessionTiming(startsAt: $startsAt->setTimezone(new DateTimeZone('UTC')), endsAt: $endsAt?->setTimezone(new DateTimeZone('UTC')), trackTimezoneOffset: $session['gmtOffset']), sourceUrl: $url);
         }
 
         return $sessions;
@@ -132,7 +136,7 @@ final class Formula1ScheduleScraper
 
         foreach ($raceSchedules as $index => $raceSessions) {
             foreach ($raceSessions as $session) {
-                $sessions[] = new RacingSession(series: $session->series, seriesName: $session->seriesName, round: $index + 1, eventName: $session->eventName, location: $session->location, sessionName: $session->sessionName, timing: new RacingSessionTiming(startsAt: $session->startsAt, endsAt: $session->endsAt, trackTimezoneOffset: $session->trackTimezoneOffset), sourceUrl: $session->sourceUrl);
+                $sessions[] = new RacingSession(series: $session->series, seriesName: $session->seriesName, round: $index + 1, eventName: $session->eventName, countryName: $session->countryName, location: $session->location, sessionName: $session->sessionName, timing: new RacingSessionTiming(startsAt: $session->startsAt, endsAt: $session->endsAt, trackTimezoneOffset: $session->trackTimezoneOffset), sourceUrl: $session->sourceUrl);
             }
         }
 

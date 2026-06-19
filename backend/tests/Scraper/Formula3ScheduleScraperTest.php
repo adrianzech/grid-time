@@ -40,7 +40,7 @@ final class Formula3ScheduleScraperTest extends TestCase
                 'props' => [
                     'pageProps' => [
                         'pageData' => [
-                            'CountryName' => 'Austria',
+                            'CountryName' => 'CZECHIA',
                             'CircuitShortName' => 'Spielberg',
                             'SessionResults' => [
                                 [
@@ -66,7 +66,8 @@ final class Formula3ScheduleScraperTest extends TestCase
         self::assertSame('F3', $sessions[0]->series);
         self::assertSame('Formula 3', $sessions[0]->seriesName);
         self::assertSame(4, $sessions[0]->round);
-        self::assertSame('Austria', $sessions[0]->eventName);
+        self::assertSame('CZECHIA', $sessions[0]->eventName);
+        self::assertSame('Czechia', $sessions[0]->countryName);
         self::assertSame('Spielberg', $sessions[0]->location);
         self::assertSame('Practice', $sessions[0]->sessionName);
         self::assertSame('2026-06-26 06:35:00', $sessions[0]->startsAt->format('Y-m-d H:i:s'));

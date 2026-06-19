@@ -44,6 +44,9 @@ class Event
         #[Groups(['event:read', 'session:read'])]
         private string $name,
         #[ORM\Column(length: 128)]
+        #[Groups(['event:read'])]
+        private string $countryName,
+        #[ORM\Column(length: 128)]
         #[Groups(['event:read', 'session:read'])]
         private string $location,
         #[ORM\Column(length: 512)]
@@ -77,14 +80,20 @@ class Event
         return $this->location;
     }
 
+    public function getCountryName(): string
+    {
+        return $this->countryName;
+    }
+
     public function getSourceUrl(): string
     {
         return $this->sourceUrl;
     }
 
-    public function updateFromSchedule(string $name, string $location, string $sourceUrl): void
+    public function updateFromSchedule(string $name, string $countryName, string $location, string $sourceUrl): void
     {
         $this->name = $name;
+        $this->countryName = $countryName;
         $this->location = $location;
         $this->sourceUrl = $sourceUrl;
     }

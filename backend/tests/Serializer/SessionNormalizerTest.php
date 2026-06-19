@@ -70,7 +70,7 @@ final class SessionNormalizerTest extends TestCase
     {
         $series = new Series('F1', 'Formula 1');
         $season = new Season($series, 2026, 'Formula 1 2026');
-        $event = new Event($season, 1, 'Australian Grand Prix', 'Australia', 'https://www.formula1.com/en/racing/2026/australia');
+        $event = new Event($season, 1, 'Australian Grand Prix', 'Australia', 'Australia', 'https://www.formula1.com/en/racing/2026/australia');
 
         return new Session(
             event: $event,
