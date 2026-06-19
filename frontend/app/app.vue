@@ -11,14 +11,8 @@
         <div class="mb-3">
           <div>
             <p class="text-xs font-bold uppercase tracking-[0.22em] text-race-red">
-              Quick look
-            </p>
-            <h2
-              id="quick-look-heading"
-              class="mt-1 text-lg font-black text-white"
-            >
               This weekend
-            </h2>
+            </p>
           </div>
         </div>
 
@@ -278,7 +272,7 @@
                         {{ formatEventTitle(event) }}
                       </span>
                       <span
-                        v-if="isEventActive(event, currentDate)"
+                        v-if="isEventActive(event, now)"
                         class="rounded bg-race-red px-2 py-1 text-xs font-bold uppercase text-white"
                       >
                         Live weekend
