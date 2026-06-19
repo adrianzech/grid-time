@@ -3,6 +3,80 @@
     <NuxtRouteAnnouncer />
 
     <main class="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
+      <section
+        v-if="quickLookItems.length"
+        class="mb-4"
+        aria-labelledby="quick-look-heading"
+      >
+        <div class="mb-3">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[0.22em] text-race-red">
+              Quick look
+            </p>
+            <h2
+              id="quick-look-heading"
+              class="mt-1 text-lg font-black text-white"
+            >
+              This weekend
+            </h2>
+          </div>
+        </div>
+
+        <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+          <button
+            v-for="item in quickLookItems"
+            :key="`${item.series.code}-${item.event['@id']}`"
+            type="button"
+            class="w-72 shrink-0 snap-start rounded-lg border border-white/10 bg-panel p-4 text-left shadow-xl shadow-black/20 transition hover:border-race-red/50 hover:bg-panel-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-race-red"
+            @click="openQuickLookItem(item)"
+          >
+            <span class="flex items-start justify-between gap-3">
+              <span>
+                <span class="block text-xs font-bold uppercase tracking-[0.2em] text-race-red">
+                  {{ item.series.code }}
+                </span>
+                <span class="mt-1 block text-sm font-bold text-zinc-300">
+                  {{ item.series.name }}
+                </span>
+              </span>
+              <ChevronDown :size="18" class="mt-1 text-zinc-500" />
+            </span>
+            <span
+              class="mt-5 block truncate text-lg font-black text-white"
+              :title="item.event.name"
+            >
+              {{ formatEventTitle(item.event) }}
+            </span>
+            <span
+              v-if="item.session"
+              class="mt-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500"
+            >
+              {{ formatSessionDateLong(item.session) }}
+            </span>
+            <span class="mt-3 flex items-end justify-between gap-3">
+              <span class="min-w-0">
+                <span class="block truncate text-sm font-bold text-zinc-300">
+                  {{ item.session ? item.session.name : 'Weekend complete' }}
+                </span>
+                <span class="mt-1 block text-xs text-zinc-500">
+                  {{ item.session && isSessionLive(item.session, now) ? 'Live now' : 'Next session' }}
+                </span>
+              </span>
+              <span class="shrink-0 text-right text-lg font-black tabular-nums text-white">
+                {{ item.session ? formatSessionTime(item.session) : '—' }}
+              </span>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section
+        v-else-if="isQuickLookReady"
+        class="mb-4 rounded-lg border border-white/10 bg-panel p-4 text-sm text-zinc-500"
+      >
+        No race weekends are scheduled for this weekend.
+      </section>
+
       <header class="flex flex-col gap-5 border-b border-white/10 py-5 md:flex-row md:items-end md:justify-between">
         <div class="space-y-3">
           <div class="flex items-center gap-3">
@@ -102,7 +176,10 @@
           </div>
         </section>
 
-        <div class="overflow-hidden rounded-lg border border-white/10 bg-panel shadow-2xl shadow-black/20">
+        <div
+          ref="raceWeekendsSection"
+          class="overflow-hidden rounded-lg border border-white/10 bg-panel shadow-2xl shadow-black/20"
+        >
           <div class="border-b border-white/10 p-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -345,7 +422,10 @@ import type { ApiEvent, ApiSession, ScheduleCacheEntry } from '~/composables/use
 
 const seasonYear = 2026
 const expandedEventIds = ref<Set<string>>(new Set())
-const currentDate = new Date()
+const now = ref(new Date())
+const raceWeekendsSection = ref<HTMLElement | null>(null)
+const pendingExpandedEventId = ref<string | null>(null)
+let clock: ReturnType<typeof window.setInterval> | null = null
 
 const seriesCategories = ['Formula', 'Moto', 'Superbike'] as const
 
@@ -391,6 +471,12 @@ const availableSeries = [
 
 type SeriesCode = typeof availableSeries[number]['code']
 type TimeMode = 'local' | 'track'
+type AvailableSeries = typeof availableSeries[number]
+type QuickLookItem = {
+  series: AvailableSeries
+  event: ApiEvent
+  session: ApiSession | null
+}
 
 const selectedSeriesCode = ref<SeriesCode>('F1')
 const selectedCategory = ref<SeriesCategory>('Formula')
@@ -440,31 +526,44 @@ const sessionsByEvent = computed(() => {
 
   return grouped
 })
+const weekendWindow = computed(() => getWeekendWindow(now.value))
+const quickLookItems = computed<QuickLookItem[]>(() => availableSeries.flatMap((series) => {
+  const schedule = scheduleCache.cache.value[series.code] ?? emptySchedule
+  const event = schedule.events.find((candidate) => eventOverlapsWindow(candidate, schedule.sessions, weekendWindow.value))
+
+  if (!event) {
+    return []
+  }
+
+  const eventSessions = schedule.sessions.filter((session) => session.event === event['@id'])
+  const session = eventSessions.find((candidate) => isSessionLive(candidate, now.value))
+    ?? eventSessions.find((candidate) => new Date(candidate.startsAt) > now.value)
+    ?? null
+
+  return [{ series, event, session }]
+}))
+const isQuickLookReady = computed(() => availableSeries.every((series) => {
+  const status = scheduleCache.cache.value[series.code]?.status
+
+  return status === 'ready' || status === 'error'
+}))
 
 const selectedEvent = computed(() => {
-  const now = new Date()
-
-  return events.value.find((event) => isEventActive(event, now))
-    ?? events.value.find((event) => isEventUpcoming(event, now))
+  return events.value.find((event) => isEventActive(event, now.value))
+    ?? events.value.find((event) => isEventUpcoming(event, now.value))
     ?? null
 })
 
 const upcomingEvents = computed(() => {
-  const now = new Date()
-
-  return events.value.filter((event) => isEventActive(event, now) || isEventUpcoming(event, now))
+  return events.value.filter((event) => isEventActive(event, now.value) || isEventUpcoming(event, now.value))
 })
 
 const liveSession = computed(() => {
-  const now = new Date()
-
-  return sessions.value.find((session) => isSessionLive(session, now)) ?? null
+  return sessions.value.find((session) => isSessionLive(session, now.value)) ?? null
 })
 
 const nextFutureSession = computed(() => {
-  const now = new Date()
-
-  return sessions.value.find((session) => new Date(session.startsAt) > now) ?? null
+  return sessions.value.find((session) => new Date(session.startsAt) > now.value) ?? null
 })
 
 const highlightedSession = computed(() => liveSession.value ?? nextFutureSession.value)
@@ -477,16 +576,35 @@ watch(upcomingEvents, expandFirstUpcomingEvent, { immediate: true })
 watch(selectedSeriesCode, () => {
   expandedEventIds.value = new Set()
   void scheduleCache.loadSeries(selectedSeriesCode.value)
-  void nextTick(expandFirstUpcomingEvent)
+  void nextTick(() => {
+    const eventId = pendingExpandedEventId.value
+
+    if (eventId) {
+      expandedEventIds.value = new Set([eventId])
+      pendingExpandedEventId.value = null
+      raceWeekendsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+      return
+    }
+
+    expandFirstUpcomingEvent()
+  })
 })
 
 onMounted(() => {
   void scheduleCache.initialize()
   window.addEventListener('focus', refreshSelectedSeries)
+  clock = window.setInterval(() => {
+    now.value = new Date()
+  }, 60_000)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('focus', refreshSelectedSeries)
+
+  if (clock !== null) {
+    window.clearInterval(clock)
+  }
 })
 
 function refreshSelectedSeries(): void {
@@ -523,6 +641,22 @@ function toggleEvent(event: ApiEvent): void {
   }
 
   expandedEventIds.value = nextExpandedEventIds
+}
+
+function openQuickLookItem(item: QuickLookItem): void {
+  const changesSeries = selectedSeriesCode.value !== item.series.code
+
+  pendingExpandedEventId.value = item.event['@id']
+  selectSeries(item.series.code)
+
+  if (!changesSeries) {
+    expandedEventIds.value = new Set([item.event['@id']])
+    pendingExpandedEventId.value = null
+
+    void nextTick(() => {
+      raceWeekendsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
 }
 
 function selectSeries(code: SeriesCode): void {
@@ -586,6 +720,29 @@ function endOfLocalDay(date: Date): Date {
   return end
 }
 
+function getWeekendWindow(date: Date): { start: Date, end: Date } {
+  const start = startOfLocalDay(date)
+  start.setDate(start.getDate() + 5 - start.getDay())
+
+  const end = endOfLocalDay(start)
+  end.setDate(end.getDate() + 2)
+
+  return { start, end }
+}
+
+function eventOverlapsWindow(event: ApiEvent, sessions: ApiSession[], window: { start: Date, end: Date }): boolean {
+  return sessions.some((session) => {
+    if (session.event !== event['@id']) {
+      return false
+    }
+
+    const sessionStart = new Date(session.startsAt)
+    const sessionEnd = sessionEndDate(session)
+
+    return sessionStart <= window.end && sessionEnd >= window.start
+  })
+}
+
 function formatSessionDay(session: ApiSession): string {
   return formatSessionDatePart(session.startsAt, session, { day: '2-digit' })
 }
@@ -611,9 +768,8 @@ function formatEventTitle(event: ApiEvent): string {
 }
 
 function eventNextSessionLabel(event: ApiEvent): string {
-  const now = new Date()
-  const eventSession = eventSessions(event).find((session) => isSessionLive(session, now))
-    ?? eventSessions(event).find((session) => new Date(session.startsAt) > now)
+  const eventSession = eventSessions(event).find((session) => isSessionLive(session, now.value))
+    ?? eventSessions(event).find((session) => new Date(session.startsAt) > now.value)
 
   return eventSession ? `${eventSession.name} ${formatSessionTime(eventSession)}` : 'Weekend complete'
 }
