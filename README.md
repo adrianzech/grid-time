@@ -31,6 +31,14 @@ All schedule timestamps are stored in UTC. Scrapers are idempotent and can be ru
 
 Run commands from `backend/`. Every scraper accepts `--year`; it defaults to `2026`.
 
+Run every currently supported schedule scraper at once:
+
+```bash
+php bin/console app:scrape:all --year=2026
+```
+
+The combined command runs Formula 1, Formula 2, Formula 3, MotoGP, Moto2, Moto3 and WorldSBK. It continues if one series fails and returns a failure status after all series have been attempted.
+
 | Series    | Command                                         |
 |-----------|-------------------------------------------------|
 | Formula 1 | `php bin/console app:scrape:f1 --year=2026`     |
