@@ -19,6 +19,19 @@ Supported series:
 
 Configure `DATABASE_URL`, `APP_SECRET`, `API_KEY_PEPPER` and `CORS_ALLOW_ORIGIN` for Symfony. The Nuxt server additionally requires `NUXT_INTERNAL_API_BASE` and `NUXT_FRONTEND_API_KEY`.
 
+## Container images
+
+Both Dockerfiles use the repository root as their build context. Build them from
+the repository root:
+
+```bash
+docker build -f docker/build/backend/Dockerfile -t grid-time-backend .
+docker build -f docker/build/frontend/Dockerfile --target production -t grid-time-frontend .
+```
+
+Runtime secrets and service URLs must be passed as container environment
+variables; they are intentionally excluded from the image build context.
+
 ## Backend setup
 
 ```bash
