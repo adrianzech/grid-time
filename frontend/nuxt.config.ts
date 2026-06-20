@@ -6,8 +6,10 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
+    internalApiBase: '',
+    frontendApiKey: '',
     public: {
-      apiBase: 'https://localhost:8000/api',
+      apiBase: '/_schedule',
     },
   },
   compatibilityDate: '2025-07-15',
