@@ -78,13 +78,13 @@
             <span class="text-xs font-semibold uppercase tracking-[0.26em] text-race-red">Grid Time</span>
           </div>
 
-          <div class="max-w-5xl rounded-lg border border-white/10 bg-panel p-2 shadow-2xl shadow-black/20">
-            <div class="grid grid-cols-3 gap-1 rounded-md bg-black/20 p-1">
+          <div class="max-w-5xl">
+            <div class="inline-grid grid-cols-3 gap-1 rounded-lg border border-white/10 bg-panel p-2 shadow-xl shadow-black/20">
               <button
                 v-for="category in seriesCategories"
                 :key="category"
                 type="button"
-                class="rounded px-3 py-2 text-sm font-bold transition"
+                class="rounded-md px-4 py-2 text-sm font-bold transition"
                 :class="category === selectedCategory ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
                 :aria-pressed="category === selectedCategory"
                 @click="selectCategory(category)"
@@ -93,17 +93,17 @@
               </button>
             </div>
 
-            <div class="mt-2 flex flex-wrap gap-2">
+            <div class="mt-3 flex flex-wrap gap-2">
               <button
                 v-for="series in visibleSeries"
                 :key="series.code"
                 type="button"
-                class="min-w-32 flex-1 rounded-md px-3 py-2 text-left transition sm:flex-none"
-                :class="series.code === selectedSeriesCode ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
+                class="flex h-[77px] min-w-32 flex-1 items-center rounded-lg border px-4 text-left transition sm:flex-none"
+                :class="series.code === selectedSeriesCode ? 'border-race-red bg-race-red text-white shadow-lg shadow-race-red/20' : 'border-white/10 bg-panel text-zinc-400 shadow-xl shadow-black/20 hover:border-white/25 hover:bg-panel-soft hover:text-white'"
                 :aria-pressed="series.code === selectedSeriesCode"
                 @click="selectSeries(series.code)"
               >
-                <span class="mt-1 block text-base font-black sm:text-lg">
+                <span class="block text-base font-black sm:text-lg">
                   {{ series.name }}
                 </span>
               </button>
