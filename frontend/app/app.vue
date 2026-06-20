@@ -844,18 +844,18 @@ function sessionStatusBadgeClass(session: ApiSession): string {
 
 function sessionRowClass(session: ApiSession): string {
   if (isSessionLive(session)) {
-    return 'border-race-red bg-race-red/10 shadow-[inset_0_0_0_1px_rgba(225,6,0,0.16)] hover:bg-race-red/15'
+    return 'border-l-race-red bg-race-red/5 hover:bg-race-red/10'
   }
 
   if (isSessionCompleted(session)) {
-    return 'border-transparent bg-black/5 opacity-70 hover:bg-white/2'
+    return 'border-l-transparent bg-black/5 opacity-70 hover:bg-white/2'
   }
 
   if (isNextSession(session)) {
-    return 'border-race-red bg-race-red/10 shadow-[inset_0_0_0_1px_rgba(225,6,0,0.16)] hover:bg-race-red/15'
+    return 'border-l-race-red bg-race-red/5 hover:bg-race-red/10'
   }
 
-  return 'border-transparent hover:bg-white/3'
+  return 'border-l-transparent hover:bg-white/3'
 }
 
 function formatSessionTime(session: ApiSession, value = session.startsAt): string {
