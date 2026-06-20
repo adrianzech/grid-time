@@ -1,0 +1,232 @@
+name: Backend
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'docker/build/backend/**'
+      - '.dockerignore'
+      - '.github/workflows/backend.yml'
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+    paths:
+      - 'backend/**'
+      - 'docker/build/backend/**'
+      - '.dockerignore'
+      - '.github/workflows/backend.yml'
+
+concurrency:
+  group: backend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.5'
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/grid-time-backend
+
+jobs:
+  prepare:
+    name: Prepare dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_pgsql
+          tools: composer:v2
+          coverage: none
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
+        working-directory: backend
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-vendor
+          path: backend/vendor
+          retention-days: 1
+
+  phpstan:
+    name: PHPStan
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_pgsql
+          coverage: none
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-vendor
+          path: backend/vendor
+
+      - run: |
+          php bin/console cache:warmup --env=dev
+          composer phpstan
+        working-directory: backend
+
+  php-cs-fixer:
+    name: PHP CS Fixer
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-vendor
+          path: backend/vendor
+
+      - run: composer cs-check
+        working-directory: backend
+
+  phpmd:
+    name: PHPMD
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-vendor
+          path: backend/vendor
+
+      - run: composer phpmd
+        working-directory: backend
+
+  lint:
+    name: Symfony linting
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-vendor
+          path: backend/vendor
+
+      - run: |
+          php bin/console lint:twig templates
+          php bin/console lint:yaml config --parse-tags
+        working-directory: backend
+
+  security:
+    name: Dependency security audit
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer:v2
+          coverage: none
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-vendor
+          path: backend/vendor
+
+      - run: composer audit --no-interaction
+        working-directory: backend
+
+  build-dev-image:
+    name: Build development image
+    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+    needs: [phpstan, php-cs-fixer, phpmd, lint, security]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/build/backend/Dockerfile
+          target: runtime
+          push: true
+          build-args: |
+            PHP_VERSION=8.5
+            APP_ENV=dev
+            APP_DEBUG=1
+          tags: |
+            ${{ env.IMAGE_NAME }}:dev-${{ github.sha }}
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && format('{0}:dev-latest', env.IMAGE_NAME) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-prod-image:
+    name: Build production image
+    if: github.event_name == 'push'
+    needs: [phpstan, php-cs-fixer, phpmd, lint, security]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/build/backend/Dockerfile
+          target: runtime
+          push: true
+          build-args: |
+            PHP_VERSION=8.5
+            APP_ENV=prod
+            APP_DEBUG=0
+          tags: |
+            ${{ env.IMAGE_NAME }}:prod-${{ github.sha }}
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && format('{0}:latest', env.IMAGE_NAME) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

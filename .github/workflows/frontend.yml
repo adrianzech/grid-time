@@ -1,0 +1,114 @@
+name: Frontend
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'docker/build/frontend/**'
+      - '.dockerignore'
+      - '.github/workflows/frontend.yml'
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+    paths:
+      - 'frontend/**'
+      - 'docker/build/frontend/**'
+      - '.dockerignore'
+      - '.github/workflows/frontend.yml'
+
+concurrency:
+  group: frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/grid-time-frontend
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1'
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run postinstall
+      - run: bun run lint
+
+  build-dev-image:
+    name: Build development image
+    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/build/frontend/Dockerfile
+          target: development
+          push: true
+          build-args: NUXT_DEVTOOLS=true
+          tags: |
+            ${{ env.IMAGE_NAME }}:dev-${{ github.sha }}
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && format('{0}:dev-latest', env.IMAGE_NAME) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-prod-image:
+    name: Build production image
+    if: github.event_name == 'push'
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/build/frontend/Dockerfile
+          target: production
+          push: true
+          build-args: NUXT_DEVTOOLS=false
+          tags: |
+            ${{ env.IMAGE_NAME }}:prod-${{ github.sha }}
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && format('{0}:latest', env.IMAGE_NAME) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
