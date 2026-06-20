@@ -34,7 +34,7 @@ final class RevokeApiKeyCommand extends Command
         }
         $key->revoke();
         $this->entityManager->flush();
-        (new SymfonyStyle($input, $output))->success('API key revoked.');
+        new SymfonyStyle($input, $output)->success('API key revoked.');
 
         return Command::SUCCESS;
     }

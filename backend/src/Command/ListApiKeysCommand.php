@@ -23,7 +23,7 @@ final class ListApiKeysCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $rows = array_map(static fn (ApiKey $key): array => [$key->getIdentifier(), $key->getLabel(), $key->getCreatedAt()->format(DATE_ATOM), $key->getLastUsedAt()?->format(DATE_ATOM) ?? 'never', $key->isRevoked() ? 'revoked' : 'active'], $this->entityManager->getRepository(ApiKey::class)->findBy([], ['id' => 'ASC']));
-        (new SymfonyStyle($input, $output))->table(['Identifier', 'Label', 'Created', 'Last used', 'Status'], $rows);
+        new SymfonyStyle($input, $output)->table(['Identifier', 'Label', 'Created', 'Last used', 'Status'], $rows);
 
         return Command::SUCCESS;
     }

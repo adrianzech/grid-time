@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\ApiKey;
+use App\Enum\ApiKeyKind;
 use Doctrine\ORM\EntityManagerInterface;
+use Random\RandomException;
 
 final readonly class ApiKeyManager
 {
@@ -13,12 +15,18 @@ final readonly class ApiKeyManager
     {
     }
 
-    /** @return array{apiKey: ApiKey, token: string} */
-    public function create(string $label, int $requestsPerMinute = 120, bool $internal = false): array
+    /** @return array{apiKey: ApiKey, token: string}
+     * @throws RandomException
+     */
+    public function create(string $label, int $requestsPerMinute = 120, ApiKeyKind $kind = ApiKeyKind::ThirdParty): array
     {
         $identifier = bin2hex(random_bytes(8));
-        $secret = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
-        $apiKey = new ApiKey($identifier, $label, $this->hash($secret), requestsPerMinute: $requestsPerMinute, internal: $internal);
+        $secret = 32
+                |> random_bytes(...)
+                |> base64_encode(...)
+                |> (fn ($x) => strtr($x, '+/', '-_'))
+                |> (fn ($x) => rtrim($x, '='));
+        $apiKey = new ApiKey($identifier, $label, $this->hash($secret), requestsPerMinute: $requestsPerMinute, kind: $kind);
         $this->entityManager->persist($apiKey);
         $this->entityManager->flush();
 

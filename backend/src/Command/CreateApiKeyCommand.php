@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Enum\ApiKeyKind;
 use App\Service\ApiKeyManager;
+use Random\RandomException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -28,14 +30,18 @@ final class CreateApiKeyCommand extends Command
             ->addOption('internal', null, InputOption::VALUE_NONE, 'Create an internal first-party key');
     }
 
+    /**
+     * @throws RandomException
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $limit = filter_var($input->getOption('limit'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if ($limit === false) {
             return Command::INVALID;
         }
-        $result = $this->apiKeyManager->create((string) $input->getArgument('label'), $limit, (bool) $input->getOption('internal'));
-        (new SymfonyStyle($input, $output))->success(sprintf("Store this key now; it cannot be shown again:\n%s", $result['token']));
+        $kind = $input->getOption('internal') ? ApiKeyKind::FirstParty : ApiKeyKind::ThirdParty;
+        $result = $this->apiKeyManager->create((string) $input->getArgument('label'), $limit, $kind);
+        new SymfonyStyle($input, $output)->success(sprintf("Store this key now; it cannot be shown again:\n%s", $result['token']));
 
         return Command::SUCCESS;
     }

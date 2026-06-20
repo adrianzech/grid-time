@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\ApiKeyKind;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -28,8 +29,7 @@ class ApiKey
         private readonly string $scope = 'schedule:read',
         #[ORM\Column]
         private readonly int $requestsPerMinute = 120,
-        #[ORM\Column]
-        private readonly bool $internal = false,
+        ApiKeyKind $kind = ApiKeyKind::ThirdParty,
         #[ORM\Column]
         private readonly DateTimeImmutable $createdAt = new DateTimeImmutable(),
         #[ORM\Column(nullable: true)]
@@ -37,7 +37,11 @@ class ApiKey
         #[ORM\Column(nullable: true)]
         private ?DateTimeImmutable $lastUsedAt = null,
     ) {
+        $this->internal = $kind->isInternal();
     }
+
+    #[ORM\Column]
+    private readonly bool $internal;
 
     public function getId(): ?int
     {
