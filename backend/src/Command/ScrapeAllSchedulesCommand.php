@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -11,6 +12,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Throwable;
 
 #[AsCommand(
@@ -19,6 +21,11 @@ use Throwable;
 )]
 final class ScrapeAllSchedulesCommand extends Command
 {
+    public function __construct(#[Autowire(service: 'monolog.logger.scraper')] private readonly LoggerInterface $scraperLogger)
+    {
+        parent::__construct();
+    }
+
     /**
      * @var array<string, string>
      */
@@ -45,6 +52,7 @@ final class ScrapeAllSchedulesCommand extends Command
         $year = filter_var($input->getOption('year'), FILTER_VALIDATE_INT);
 
         if ($year === false) {
+            $this->scraperLogger->warning('Combined schedule scrape rejected invalid year.', ['year' => $input->getOption('year')]);
             $io->error('The --year option must be an integer.');
 
             return Command::INVALID;
@@ -59,6 +67,7 @@ final class ScrapeAllSchedulesCommand extends Command
         }
 
         $failedSeries = [];
+        $this->scraperLogger->info('Combined schedule scrape started.', ['year' => $year]);
 
         foreach (self::SCRAPER_COMMANDS as $series => $commandName) {
             $io->section(sprintf('Scraping %s', $series));
@@ -72,6 +81,7 @@ final class ScrapeAllSchedulesCommand extends Command
                 $exitCode = $application->find($commandName)->run($commandInput, $output);
             } catch (Throwable $exception) {
                 $failedSeries[] = $series;
+                $this->scraperLogger->error('Series schedule scrape failed.', ['series' => $series, 'year' => $year, 'exception' => $exception]);
                 $io->error(sprintf('%s failed: %s', $series, $exception->getMessage()));
 
                 continue;
@@ -79,11 +89,13 @@ final class ScrapeAllSchedulesCommand extends Command
 
             if ($exitCode !== Command::SUCCESS) {
                 $failedSeries[] = $series;
+                $this->scraperLogger->error('Series schedule scrape failed.', ['series' => $series, 'year' => $year, 'exit_code' => $exitCode]);
                 $io->error(sprintf('%s failed with exit code %d.', $series, $exitCode));
             }
         }
 
         if ($failedSeries !== []) {
+            $this->scraperLogger->error('Combined schedule scrape failed.', ['year' => $year, 'failed_series' => $failedSeries]);
             implode(', ', $failedSeries)
                 |> (static fn (string $series) => sprintf('Schedule scraping failed for: %s.', $series))
                 |> $io->error(...);
@@ -92,6 +104,7 @@ final class ScrapeAllSchedulesCommand extends Command
         }
 
         $io->success(sprintf('Completed schedule scraping for all series for %d.', $year));
+        $this->scraperLogger->info('Combined schedule scrape completed.', ['year' => $year]);
 
         return Command::SUCCESS;
     }

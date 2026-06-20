@@ -8,6 +8,7 @@ use App\Command\ScrapeAllSchedulesCommand;
 use Closure;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -120,7 +121,7 @@ final class ScrapeAllSchedulesCommandTest extends TestCase
             }]);
         }
 
-        $application->addCommands([new ScrapeAllSchedulesCommand()]);
+        $application->addCommands([new ScrapeAllSchedulesCommand(new NullLogger())]);
 
         return $application;
     }

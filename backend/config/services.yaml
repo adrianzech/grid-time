@@ -23,6 +23,11 @@ services:
     App\Service\ApiKeyManager:
         arguments:
             $apiKeyPepper: '%app.api_key_pepper%'
+            $securityLogger: '@monolog.logger.security'
+
+    App\Security\ApiKeyAuthenticator:
+        arguments:
+            $securityLogger: '@monolog.logger.security'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

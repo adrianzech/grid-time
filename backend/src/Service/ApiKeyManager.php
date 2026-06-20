@@ -7,11 +7,12 @@ namespace App\Service;
 use App\Entity\ApiKey;
 use App\Enum\ApiKeyKind;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Random\RandomException;
 
 final readonly class ApiKeyManager
 {
-    public function __construct(private EntityManagerInterface $entityManager, private string $apiKeyPepper)
+    public function __construct(private EntityManagerInterface $entityManager, private string $apiKeyPepper, private LoggerInterface $securityLogger)
     {
     }
 
@@ -29,6 +30,11 @@ final readonly class ApiKeyManager
         $apiKey = new ApiKey($identifier, $label, $this->hash($secret), requestsPerMinute: $requestsPerMinute, kind: $kind);
         $this->entityManager->persist($apiKey);
         $this->entityManager->flush();
+        $this->securityLogger->info('API key created.', [
+            'api_key_identifier' => $identifier,
+            'api_key_kind' => $kind->name,
+            'requests_per_minute' => $requestsPerMinute,
+        ]);
 
         return ['apiKey' => $apiKey, 'token' => sprintf('gt_live_%s_%s', $identifier, $secret)];
     }
@@ -46,6 +52,23 @@ final readonly class ApiKeyManager
         $this->entityManager->flush();
 
         return $apiKey;
+    }
+
+    public function revoke(string $identifier): bool
+    {
+        $apiKey = $this->entityManager->getRepository(ApiKey::class)->findOneBy(['identifier' => $identifier]);
+
+        if (!$apiKey instanceof ApiKey) {
+            $this->securityLogger->warning('API key revocation requested for an unknown key.', ['api_key_identifier' => $identifier]);
+
+            return false;
+        }
+
+        $apiKey->revoke();
+        $this->entityManager->flush();
+        $this->securityLogger->info('API key revoked.', ['api_key_identifier' => $identifier]);
+
+        return true;
     }
 
     private function hash(string $secret): string

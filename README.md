@@ -49,6 +49,18 @@ The combined command runs Formula 1, Formula 2, Formula 3, MotoGP, Moto2, Moto3 
 | Moto3     | `php bin/console app:scrape:moto3 --year=2026`  |
 | WorldSBK  | `php bin/console app:scrape:wsbk --year=2026`   |
 
+## Logging
+
+The backend writes daily rotating logs to `backend/var/log/` and keeps 14 files per channel:
+
+| File | Contents |
+|------|----------|
+| `app.log` | Application and framework events |
+| `scraper.log` | Schedule scrape lifecycle, source failures and import errors |
+| `security.log` | API key creation, revocation, authentication failures and rate limits |
+
+Production records `info` and higher. Development additionally records `debug` events, including successful source requests and API-key authentication. Logs never contain API tokens, authentication headers, source response bodies, API-key labels or full client IP addresses.
+
 ## API keys
 
 The schedule API requires an `X-API-Key` header for Series, Seasons, Events and Sessions. Keys are server-side secrets and must not be placed in browser code or committed environment files.

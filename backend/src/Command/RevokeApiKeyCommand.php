@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Entity\ApiKey;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\ApiKeyManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -16,7 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'api-key:revoke', description: 'Revoke an API key by identifier.')]
 final class RevokeApiKeyCommand extends Command
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager)
+    public function __construct(private readonly ApiKeyManager $apiKeyManager)
     {
         parent::__construct();
     }
@@ -28,12 +27,9 @@ final class RevokeApiKeyCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $key = $this->entityManager->getRepository(ApiKey::class)->findOneBy(['identifier' => $input->getArgument('identifier')]);
-        if (!$key instanceof ApiKey) {
+        if (!$this->apiKeyManager->revoke((string) $input->getArgument('identifier'))) {
             return Command::FAILURE;
         }
-        $key->revoke();
-        $this->entityManager->flush();
         new SymfonyStyle($input, $output)->success('API key revoked.');
 
         return Command::SUCCESS;

@@ -8,7 +8,11 @@ use App\Dto\RacingSession;
 use App\Dto\RacingSessionTiming;
 use App\Service\CountryNameNormalizer;
 use DateTimeZone;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use RuntimeException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Throwable;
 
 final class Formula1ScheduleScraper
 {
@@ -20,33 +24,49 @@ final class Formula1ScheduleScraper
 
     private CountryNameNormalizer $countryNameNormalizer;
 
-    public function __construct(?Formula1ScheduleDataExtractor $extractor = null, ?CountryNameNormalizer $countryNameNormalizer = null)
+    private LoggerInterface $logger;
+
+    public function __construct(?Formula1ScheduleDataExtractor $extractor = null, ?CountryNameNormalizer $countryNameNormalizer = null, #[Autowire(service: 'monolog.logger.scraper')] ?LoggerInterface $scraperLogger = null)
     {
         $this->extractor = $extractor ?? new Formula1ScheduleDataExtractor();
         $this->countryNameNormalizer = $countryNameNormalizer ?? new CountryNameNormalizer();
+        $this->logger = $scraperLogger ?? new NullLogger();
     }
 
     /**
      * @return list<RacingSession>
+     *
+     * @throws Throwable
      */
     public function scrape(int $year): array
     {
-        $raceUrls = $this->discoverRaceUrls($year);
-        $raceSchedules = [];
+        $this->logger->info('Schedule scrape started.', ['series' => self::SERIES_CODE, 'year' => $year]);
 
-        foreach ($raceUrls as $url) {
-            $raceSessions = $this->scrapeRace($url);
+        try {
+            $raceUrls = $this->discoverRaceUrls($year);
+            $raceSchedules = [];
 
-            if ($raceSessions === []) {
-                continue;
+            foreach ($raceUrls as $url) {
+                $raceSessions = $this->scrapeRace($url);
+
+                if ($raceSessions === []) {
+                    continue;
+                }
+
+                usort($raceSessions, static fn (RacingSession $a, RacingSession $b): int => $a->startsAt <=> $b->startsAt);
+
+                $raceSchedules[] = $raceSessions;
             }
 
-            usort($raceSessions, static fn (RacingSession $a, RacingSession $b): int => $a->startsAt <=> $b->startsAt);
+            $sessions = $this->numberRaceSchedules($raceSchedules);
+            $this->logger->info('Schedule scrape completed.', ['series' => self::SERIES_CODE, 'year' => $year, 'session_count' => count($sessions)]);
 
-            $raceSchedules[] = $raceSessions;
+            return $sessions;
+        } catch (Throwable $exception) {
+            $this->logger->error('Schedule scrape failed.', ['series' => self::SERIES_CODE, 'year' => $year, 'exception' => $exception]);
+
+            throw $exception;
         }
-
-        return $this->numberRaceSchedules($raceSchedules);
     }
 
     /**
@@ -93,8 +113,12 @@ final class Formula1ScheduleScraper
         }
 
         if ($html === false) {
+            $this->logger->error('Schedule source request failed.', ['series' => self::SERIES_CODE, 'source_url' => $url, 'error' => $error]);
+
             throw new RuntimeException(sprintf('Could not fetch "%s": %s', $url, $error ?? 'unknown error'));
         }
+
+        $this->logger->debug('Schedule source request completed.', ['series' => self::SERIES_CODE, 'source_url' => $url]);
 
         return $html;
     }

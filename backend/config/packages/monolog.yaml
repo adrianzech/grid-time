@@ -1,0 +1,41 @@
+monolog:
+    channels: [scraper, security]
+    handlers:
+        app:
+            type: rotating_file
+            path: '%kernel.logs_dir%/app.log'
+            level: info
+            max_files: 14
+            channels: ['!scraper', '!security', '!deprecation']
+        scraper:
+            type: rotating_file
+            path: '%kernel.logs_dir%/scraper.log'
+            level: info
+            max_files: 14
+            channels: [scraper]
+        security:
+            type: rotating_file
+            path: '%kernel.logs_dir%/security.log'
+            level: info
+            max_files: 14
+            channels: [security]
+
+when@dev:
+    monolog:
+        handlers:
+            app:
+                level: debug
+            scraper:
+                level: debug
+            security:
+                level: debug
+
+when@test:
+    monolog:
+        handlers:
+            app:
+                type: null
+            scraper:
+                type: null
+            security:
+                type: null

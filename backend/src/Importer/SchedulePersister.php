@@ -9,14 +9,18 @@ use App\Entity\Event;
 use App\Entity\Season;
 use App\Entity\Series;
 use App\Entity\Session;
+use DateInvalidTimeZoneException;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Throwable;
 
 final readonly class SchedulePersister
 {
-    public function __construct(private EntityManagerInterface $entityManager)
+    public function __construct(private EntityManagerInterface $entityManager, #[Autowire(service: 'monolog.logger.scraper')] private LoggerInterface $scraperLogger)
     {
     }
 
@@ -24,29 +28,42 @@ final readonly class SchedulePersister
      * @param list<RacingSession> $sessions
      *
      * @throws DateMalformedStringException
+     * @throws Throwable
+     * @throws DateInvalidTimeZoneException
      */
     public function persist(int $year, array $sessions): int
     {
         if ($sessions === []) {
+            $this->scraperLogger->warning('Schedule persistence skipped because no sessions were scraped.', ['year' => $year]);
+
             return 0;
         }
 
-        $series = $this->findOrCreateSeries($sessions[0]->series, $sessions[0]->seriesName);
-        $season = $this->findOrCreateSeason($series, $year);
-        $persistedSessions = 0;
-        $eventsByRound = [];
-        $sessionsByEventAndName = [];
+        $seriesCode = $sessions[0]->series;
 
-        foreach ($sessions as $session) {
-            $event = $this->findOrCreateEvent($season, $session, $eventsByRound);
-            $this->findOrCreateSession($event, $session, $sessionsByEventAndName);
-            ++$persistedSessions;
+        try {
+            $series = $this->findOrCreateSeries($seriesCode, $sessions[0]->seriesName);
+            $season = $this->findOrCreateSeason($series, $year);
+            $persistedSessions = 0;
+            $eventsByRound = [];
+            $sessionsByEventAndName = [];
+
+            foreach ($sessions as $session) {
+                $event = $this->findOrCreateEvent($season, $session, $eventsByRound);
+                $this->findOrCreateSession($event, $session, $sessionsByEventAndName);
+                ++$persistedSessions;
+            }
+
+            $season->markScheduleUpdated(new DateTimeImmutable('now', new DateTimeZone('UTC')));
+            $this->entityManager->flush();
+            $this->scraperLogger->info('Schedule persistence completed.', ['series' => $seriesCode, 'year' => $year, 'session_count' => $persistedSessions]);
+
+            return $persistedSessions;
+        } catch (Throwable $exception) {
+            $this->scraperLogger->error('Schedule persistence failed.', ['series' => $seriesCode, 'year' => $year, 'exception' => $exception]);
+
+            throw $exception;
         }
-
-        $season->markScheduleUpdated(new DateTimeImmutable('now', new DateTimeZone('UTC')));
-        $this->entityManager->flush();
-
-        return $persistedSessions;
     }
 
     private function findOrCreateSeries(string $code, string $name): Series

@@ -12,8 +12,11 @@ use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
 use JsonException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Rinvex\Country\CountryLoaderException;
 use RuntimeException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Throwable;
 
 final readonly class MotoGpScheduleScraper
@@ -27,36 +30,48 @@ final readonly class MotoGpScheduleScraper
 
     private CountryNameNormalizer $countryNameNormalizer;
 
-    public function __construct(private ?Closure $fetcher = null, ?CountryNameResolver $countryNameResolver = null, ?CountryNameNormalizer $countryNameNormalizer = null)
+    private LoggerInterface $logger;
+
+    public function __construct(private ?Closure $fetcher = null, ?CountryNameResolver $countryNameResolver = null, ?CountryNameNormalizer $countryNameNormalizer = null, #[Autowire(service: 'monolog.logger.scraper')] ?LoggerInterface $scraperLogger = null)
     {
         $this->countryNameResolver = $countryNameResolver ?? new CountryNameResolver();
         $this->countryNameNormalizer = $countryNameNormalizer ?? new CountryNameNormalizer();
+        $this->logger = $scraperLogger ?? new NullLogger();
     }
 
     /**
      * @return list<RacingSession>
      *
-     * @throws CountryLoaderException
+     * @throws CountryLoaderException|Throwable
      */
     public function scrape(int $year, string $categoryCode, string $seriesName): array
     {
-        $events = array_values(array_filter(
-            $this->fetchEvents($year),
-            static fn (array $event): bool => ($event['kind'] ?? null) === self::EVENT_KIND_GP,
-        ));
-        usort($events, static fn (array $a, array $b): int => ((int) ($a['sequence'] ?? 0)) <=> ((int) ($b['sequence'] ?? 0)));
+        $this->logger->info('Schedule scrape started.', ['series' => $categoryCode, 'year' => $year]);
 
-        $sessions = [];
+        try {
+            $events = array_values(array_filter(
+                $this->fetchEvents($year),
+                static fn (array $event): bool => ($event['kind'] ?? null) === self::EVENT_KIND_GP,
+            ));
+            usort($events, static fn (array $a, array $b): int => ((int) ($a['sequence'] ?? 0)) <=> ((int) ($b['sequence'] ?? 0)));
 
-        foreach ($events as $event) {
-            foreach ($this->sessionsFromEvent($event, $categoryCode, $seriesName, $year) as $session) {
-                $sessions[] = $session;
+            $sessions = [];
+
+            foreach ($events as $event) {
+                foreach ($this->sessionsFromEvent($event, $categoryCode, $seriesName, $year) as $session) {
+                    $sessions[] = $session;
+                }
             }
+
+            usort($sessions, static fn (RacingSession $a, RacingSession $b): int => $a->startsAt <=> $b->startsAt);
+            $this->logger->info('Schedule scrape completed.', ['series' => $categoryCode, 'year' => $year, 'session_count' => count($sessions)]);
+
+            return $sessions;
+        } catch (Throwable $exception) {
+            $this->logger->error('Schedule scrape failed.', ['series' => $categoryCode, 'year' => $year, 'exception' => $exception]);
+
+            throw $exception;
         }
-
-        usort($sessions, static fn (RacingSession $a, RacingSession $b): int => $a->startsAt <=> $b->startsAt);
-
-        return $sessions;
     }
 
     /**
@@ -64,7 +79,9 @@ final readonly class MotoGpScheduleScraper
      */
     private function fetchEvents(int $year): array
     {
-        $data = $this->json($this->fetch(sprintf('%s/motogp/v1/events?seasonYear=%d', self::BASE_URL, $year)));
+        $data = sprintf('%s/motogp/v1/events?seasonYear=%d', self::BASE_URL, $year)
+                |> $this->fetch(...)
+                |> $this->json(...);
 
         if (!is_array($data)) {
             throw new RuntimeException(sprintf('Could not decode MotoGP events for %d.', $year));
@@ -181,8 +198,12 @@ final readonly class MotoGpScheduleScraper
         }
 
         if ($json === false) {
+            $this->logger->error('Schedule source request failed.', ['source_url' => $url, 'error' => $error]);
+
             throw new RuntimeException(sprintf('Could not fetch "%s": %s', $url, $error ?? 'unknown error'));
         }
+
+        $this->logger->debug('Schedule source request completed.', ['source_url' => $url]);
 
         return $json;
     }
@@ -219,11 +240,10 @@ final readonly class MotoGpScheduleScraper
             return $value;
         }
 
-        return str_replace(
-            [' Gp', ' Of '],
-            [' GP', ' of '],
-            ucwords(strtolower($value)),
-        );
+        return $value
+                |> strtolower(...)
+                |> ucwords(...)
+                |> (fn ($x) => str_replace([' Gp', ' Of '], [' GP', ' of '], $x));
     }
 
     private function intValue(mixed $value): ?int

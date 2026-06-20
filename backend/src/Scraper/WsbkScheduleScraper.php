@@ -12,8 +12,11 @@ use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
 use JsonException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Rinvex\Country\CountryLoaderException;
 use RuntimeException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Throwable;
 
 final readonly class WsbkScheduleScraper
@@ -27,33 +30,45 @@ final readonly class WsbkScheduleScraper
 
     private CountryNameNormalizer $countryNameNormalizer;
 
-    public function __construct(private ?Closure $fetcher = null, ?CountryNameResolver $countryNameResolver = null, ?CountryNameNormalizer $countryNameNormalizer = null)
+    private LoggerInterface $logger;
+
+    public function __construct(private ?Closure $fetcher = null, ?CountryNameResolver $countryNameResolver = null, ?CountryNameNormalizer $countryNameNormalizer = null, #[Autowire(service: 'monolog.logger.scraper')] ?LoggerInterface $scraperLogger = null)
     {
         $this->countryNameResolver = $countryNameResolver ?? new CountryNameResolver();
         $this->countryNameNormalizer = $countryNameNormalizer ?? new CountryNameNormalizer();
+        $this->logger = $scraperLogger ?? new NullLogger();
     }
 
     /**
      * @return list<RacingSession>
      *
-     * @throws CountryLoaderException
+     * @throws CountryLoaderException|Throwable
      */
     public function scrape(int $year): array
     {
-        $rounds = $this->fetchData(sprintf('%s/seasons/%d/rounds', self::API_URL, $year), 'rounds');
-        usort($rounds, static fn (array $a, array $b): int => ((int) ($a['attributes']['sequence_order'] ?? 0)) <=> ((int) ($b['attributes']['sequence_order'] ?? 0)));
+        $this->logger->info('Schedule scrape started.', ['series' => self::CATEGORY_CODE, 'year' => $year]);
 
-        $sessions = [];
+        try {
+            $rounds = $this->fetchData(sprintf('%s/seasons/%d/rounds', self::API_URL, $year), 'rounds');
+            usort($rounds, static fn (array $a, array $b): int => ((int) ($a['attributes']['sequence_order'] ?? 0)) <=> ((int) ($b['attributes']['sequence_order'] ?? 0)));
 
-        foreach ($rounds as $round) {
-            foreach ($this->sessionsFromRound($round, $year) as $session) {
-                $sessions[] = $session;
+            $sessions = [];
+
+            foreach ($rounds as $round) {
+                foreach ($this->sessionsFromRound($round, $year) as $session) {
+                    $sessions[] = $session;
+                }
             }
+
+            usort($sessions, static fn (RacingSession $a, RacingSession $b): int => $a->startsAt <=> $b->startsAt);
+            $this->logger->info('Schedule scrape completed.', ['series' => self::CATEGORY_CODE, 'year' => $year, 'session_count' => count($sessions)]);
+
+            return $sessions;
+        } catch (Throwable $exception) {
+            $this->logger->error('Schedule scrape failed.', ['series' => self::CATEGORY_CODE, 'year' => $year, 'exception' => $exception]);
+
+            throw $exception;
         }
-
-        usort($sessions, static fn (RacingSession $a, RacingSession $b): int => $a->startsAt <=> $b->startsAt);
-
-        return $sessions;
     }
 
     /**
@@ -84,10 +99,10 @@ final readonly class WsbkScheduleScraper
         $countryName = $this->countryNameResolver->resolve($countryCode)
             ?? $this->countryNameNormalizer->normalize($eventName);
 
-        $data = $this->fetchData(
-            sprintf('%s/seasons/%d/rounds/%s/sessions', self::API_URL, $year, rawurlencode($roundId)),
-            'sessions',
-        );
+        $data = $roundId
+                |> rawurlencode(...)
+                |> (fn ($x) => sprintf('%s/seasons/%d/rounds/%s/sessions', self::API_URL, $year, $x))
+                |> (fn ($x) => $this->fetchData($x, 'sessions'));
         $sessions = [];
 
         foreach ($data as $session) {
@@ -180,8 +195,12 @@ final readonly class WsbkScheduleScraper
         }
 
         if ($json === false) {
+            $this->logger->error('Schedule source request failed.', ['source_url' => $url, 'error' => $error]);
+
             throw new RuntimeException(sprintf('Could not fetch "%s": %s', $url, $error ?? 'unknown error'));
         }
+
+        $this->logger->debug('Schedule source request completed.', ['source_url' => $url]);
 
         return $json;
     }
