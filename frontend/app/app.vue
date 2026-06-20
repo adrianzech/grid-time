@@ -535,6 +535,21 @@ const quickLookItems = computed<QuickLookItem[]>(() => availableSeries.flatMap((
     ?? null
 
   return [{ series, event, session }]
+}).sort((left, right) => {
+  if (left.session && right.session) {
+    return new Date(left.session.startsAt).getTime() - new Date(right.session.startsAt).getTime()
+      || left.series.code.localeCompare(right.series.code)
+  }
+
+  if (left.session) {
+    return -1
+  }
+
+  if (right.session) {
+    return 1
+  }
+
+  return left.series.code.localeCompare(right.series.code)
 }))
 const isQuickLookReady = computed(() => availableSeries.every((series) => {
   const status = scheduleCache.cache.value[series.code]?.status
