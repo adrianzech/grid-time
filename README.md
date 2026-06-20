@@ -2,6 +2,8 @@
 
 Grid Time aggregates motorsport race schedules and exposes them through a Symfony API and Nuxt web application.
 
+![app.png](docs/screenshots/app.png)
+
 Supported series:
 
 - Formula 1, Formula 2 and Formula 3
@@ -53,10 +55,10 @@ The combined command runs Formula 1, Formula 2, Formula 3, MotoGP, Moto2, Moto3 
 
 The backend writes daily rotating logs to `backend/var/log/` and keeps 14 files per channel:
 
-| File | Contents |
-|------|----------|
-| `app.log` | Application and framework events |
-| `scraper.log` | Schedule scrape lifecycle, source failures and import errors |
+| File           | Contents                                                              |
+|----------------|-----------------------------------------------------------------------|
+| `app.log`      | Application and framework events                                      |
+| `scraper.log`  | Schedule scrape lifecycle, source failures and import errors          |
 | `security.log` | API key creation, revocation, authentication failures and rate limits |
 
 Production records `info` and higher. Development additionally records `debug` events, including successful source requests and API-key authentication. Logs never contain API tokens, authentication headers, source response bodies, API-key labels or full client IP addresses.
