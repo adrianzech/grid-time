@@ -22,6 +22,7 @@
             :key="`${item.series.code}-${item.event['@id']}`"
             type="button"
             class="w-72 shrink-0 snap-start rounded-lg border border-white/10 bg-panel p-4 text-left shadow-xl shadow-black/20 transition hover:border-race-red/50 hover:bg-panel-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-race-red"
+            :class="item.session && isSessionLive(item.session, now) ? 'border-race-red/60 bg-race-red/10 hover:border-race-red hover:bg-race-red/15' : ''"
             @click="openQuickLookItem(item)"
           >
             <span class="flex items-start justify-between gap-3">
@@ -49,7 +50,10 @@
                 <span class="block truncate text-sm font-bold text-zinc-300">
                   {{ item.session ? item.session.name : 'Weekend complete' }}
                 </span>
-                <span class="mt-1 block text-xs text-zinc-500">
+                <span
+                  class="mt-1 block text-xs"
+                  :class="item.session && isSessionLive(item.session, now) ? 'font-semibold text-race-red' : 'text-zinc-500'"
+                >
                   {{ item.session && isSessionLive(item.session, now) ? 'Live now' : 'Next session' }}
                 </span>
               </span>
