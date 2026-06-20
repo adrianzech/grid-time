@@ -31,15 +31,15 @@ All schedule timestamps are stored in UTC. Scrapers are idempotent and can be ru
 
 Run commands from `backend/`. Every scraper accepts `--year`; it defaults to `2026`.
 
-| Series | Command |
-| --- | --- |
-| Formula 1 | `php bin/console app:scrape:f1 --year=2026` |
-| Formula 2 | `php bin/console app:scrape:f2 --year=2026` |
-| Formula 3 | `php bin/console app:scrape:f3 --year=2026` |
-| MotoGP | `php bin/console app:scrape:motogp --year=2026` |
-| Moto2 | `php bin/console app:scrape:moto2 --year=2026` |
-| Moto3 | `php bin/console app:scrape:moto3 --year=2026` |
-| WorldSBK | `php bin/console app:scrape:wsbk --year=2026` |
+| Series    | Command                                         |
+|-----------|-------------------------------------------------|
+| Formula 1 | `php bin/console app:scrape:f1 --year=2026`     |
+| Formula 2 | `php bin/console app:scrape:f2 --year=2026`     |
+| Formula 3 | `php bin/console app:scrape:f3 --year=2026`     |
+| MotoGP    | `php bin/console app:scrape:motogp --year=2026` |
+| Moto2     | `php bin/console app:scrape:moto2 --year=2026`  |
+| Moto3     | `php bin/console app:scrape:moto3 --year=2026`  |
+| WorldSBK  | `php bin/console app:scrape:wsbk --year=2026`   |
 
 ## API keys
 
