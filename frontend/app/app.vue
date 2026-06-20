@@ -26,9 +26,6 @@
           >
             <span class="flex items-start justify-between gap-3">
               <span>
-                <span class="block text-xs font-bold uppercase tracking-[0.2em] text-race-red">
-                  {{ item.series.code }}
-                </span>
                 <span class="mt-1 block text-sm font-bold text-zinc-300">
                   {{ item.series.name }}
                 </span>
@@ -102,9 +99,6 @@
                 :aria-pressed="series.code === selectedSeriesCode"
                 @click="selectSeries(series.code)"
               >
-                <span class="block text-xs font-semibold uppercase tracking-[0.2em] opacity-80">
-                  {{ series.code }}
-                </span>
                 <span class="mt-1 block text-base font-black sm:text-lg">
                   {{ series.name }}
                 </span>
