@@ -17,7 +17,7 @@ Supported series:
 - Composer
 - Bun
 
-Configure `DATABASE_URL`, `APP_SECRET`, `API_KEY_PEPPER` and `CORS_ALLOW_ORIGIN` for Symfony. The Nuxt server additionally requires `NUXT_INTERNAL_API_BASE` and `NUXT_FRONTEND_API_KEY`.
+Configure `APP_SECRET`, `API_KEY_PEPPER` and `CORS_ALLOW_ORIGIN` for Symfony. Configure PostgreSQL with `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_SERVER_VERSION` and `DATABASE_CHARSET`. The Nuxt server additionally requires `NUXT_INTERNAL_API_BASE` and `NUXT_FRONTEND_API_KEY`.
 
 ## Container images
 
