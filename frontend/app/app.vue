@@ -93,12 +93,12 @@
               </button>
             </div>
 
-            <div class="mt-3 flex flex-wrap gap-2">
+            <div class="-mx-4 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
               <button
                 v-for="series in visibleSeries"
                 :key="series.code"
                 type="button"
-                class="flex h-[77px] min-w-32 flex-1 items-center rounded-lg border px-4 text-left transition sm:flex-none"
+                class="flex h-14 w-36 shrink-0 items-center rounded-lg border px-4 text-left transition sm:h-[77px] sm:w-auto sm:min-w-32 sm:flex-none"
                 :class="series.code === selectedSeriesCode ? 'border-race-red bg-race-red text-white shadow-lg shadow-race-red/20' : 'border-white/10 bg-panel text-zinc-400 shadow-xl shadow-black/20 hover:border-white/25 hover:bg-panel-soft hover:text-white'"
                 :aria-pressed="series.code === selectedSeriesCode"
                 @click="selectSeries(series.code)"
