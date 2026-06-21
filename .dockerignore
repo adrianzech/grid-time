@@ -5,6 +5,7 @@
 **/.env
 **/.env.*
 !**/.env.example
+!backend/.env
 
 # Backend-generated and local development files.
 backend/vendor
