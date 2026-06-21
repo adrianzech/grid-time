@@ -20,7 +20,8 @@ RUN \
         composer install --no-interaction --prefer-dist --no-scripts; \
     else \
         composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts; \
-    fi
+    fi && \
+    php bin/console assets:install public --env=${APP_ENV} --no-debug
 
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS runtime
 ARG APP_ENV
