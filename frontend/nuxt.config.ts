@@ -4,6 +4,14 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   modules: ['@nuxt/eslint'],
   devtools: { enabled: true },
+  app: {
+    head: {
+      title: 'Grid Time',
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+      ],
+    },
+  },
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     internalApiBase: '',
