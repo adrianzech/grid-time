@@ -16,12 +16,14 @@ RUN install-php-extensions intl
 COPY backend/ ./
 
 RUN \
+    cp public/bundles/apiplatform/grid-time.css /tmp/grid-time-api.css && \
     if [ "$APP_ENV" = "dev" ]; then \
         composer install --no-interaction --prefer-dist --no-scripts; \
     else \
         composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts; \
     fi && \
-    php bin/console assets:install public --env=${APP_ENV} --no-debug
+    php bin/console assets:install public --env=${APP_ENV} --no-debug && \
+    cp /tmp/grid-time-api.css public/bundles/apiplatform/grid-time.css
 
 FROM dunglas/frankenphp:php${PHP_VERSION}-alpine AS runtime
 ARG APP_ENV

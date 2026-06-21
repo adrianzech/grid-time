@@ -29,7 +29,7 @@ services:
             DATABASE_SERVER_VERSION: ${DATABASE_SERVER_VERSION}
             DATABASE_CHARSET: ${DATABASE_CHARSET}
         volumes:
-            - /opt/docker/appdata/gridtime/backend/var:/srv/app/var
+            - /opt/docker/appdata/gridtime/backend/log:/srv/app/var/log
         networks:
             - gridtime
             - proxy
