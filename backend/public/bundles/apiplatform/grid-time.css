@@ -1,0 +1,259 @@
+:root {
+  --grid-time-carbon: #090a0d;
+  --grid-time-panel: #111319;
+  --grid-time-panel-soft: #181b23;
+  --grid-time-border: #2a2e39;
+  --grid-time-text: #f3f4f6;
+  --grid-time-text-muted: #a8adb8;
+  --grid-time-red: #e10600;
+  --grid-time-red-dark: #9f0804;
+  --apip-page-background: var(--grid-time-carbon);
+  --apip-block-background: var(--grid-time-panel);
+  --apip-block-border: var(--grid-time-border);
+  --apip-block-shadow: none;
+  --apip-tag-hover: rgba(255, 255, 255, 0.04);
+  --apip-btn-background: var(--grid-time-panel-soft);
+  --apip-btn-hover-background: #242936;
+  --apip-btn-hover-border: #3c4352;
+}
+
+html,
+body {
+  background: var(--grid-time-carbon);
+  color: var(--grid-time-text);
+}
+
+body {
+  margin-top: 64px;
+}
+
+.grid-time-api-header {
+  align-items: center;
+  background: var(--grid-time-panel);
+  border-bottom: 1px solid var(--grid-time-border);
+  display: flex;
+  height: 64px;
+  justify-content: space-between;
+  left: 0;
+  padding: 0 clamp(1.25rem, 5vw, 4rem);
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.grid-time-api-header::before {
+  content: none;
+}
+
+.grid-time-api-brand {
+  color: var(--grid-time-text);
+  font-family: Inter, Open Sans, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.grid-time-api-brand::before {
+  background: var(--grid-time-red);
+  border-radius: 999px;
+  content: '';
+  display: inline-block;
+  height: 0.55rem;
+  margin-right: 0.55rem;
+  width: 0.55rem;
+}
+
+.grid-time-api-brand:hover,
+.grid-time-api-brand:focus-visible {
+  color: #fff;
+}
+
+.grid-time-api-label {
+  color: var(--grid-time-text-muted);
+  font-family: Inter, Open Sans, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+#swagger-ui.api-platform .information-container.wrapper,
+#formats .information-container.wrapper,
+#swagger-ui.api-platform .opblock,
+#swagger-ui.api-platform .scheme-container,
+#swagger-ui.api-platform .dialog-ux .modal-ux,
+#swagger-ui.api-platform section.models,
+#swagger-ui.api-platform section.models.is-open h4 {
+  background: var(--grid-time-panel);
+  border-color: var(--grid-time-border);
+  box-shadow: none;
+}
+
+#swagger-ui.api-platform .info .title,
+#swagger-ui.api-platform a,
+#formats a {
+  color: var(--grid-time-red);
+}
+
+#swagger-ui.api-platform .info .title small,
+#swagger-ui.api-platform .info p,
+#swagger-ui.api-platform .opblock-tag,
+#swagger-ui.api-platform .opblock-summary-description,
+#swagger-ui.api-platform .opblock-description-wrapper p,
+#swagger-ui.api-platform .parameter__name,
+#swagger-ui.api-platform .response-col_status,
+#swagger-ui.api-platform .response-col_description,
+#swagger-ui.api-platform .model-title,
+#swagger-ui.api-platform .model,
+#swagger-ui.api-platform .markdown p,
+#swagger-ui.api-platform label,
+#formats {
+  color: var(--grid-time-text);
+}
+
+#swagger-ui.api-platform .opblock-tag small,
+#swagger-ui.api-platform .parameter__type,
+#swagger-ui.api-platform .parameter__deprecated,
+#swagger-ui.api-platform .model-title__text,
+#swagger-ui.api-platform .prop-type,
+#swagger-ui.api-platform .prop-format,
+#swagger-ui.api-platform .response-col_links,
+#swagger-ui.api-platform .opblock-summary-path__deprecated,
+#formats {
+  color: var(--grid-time-text-muted);
+}
+
+#swagger-ui.api-platform .opblock.opblock-get .opblock-summary-method,
+#swagger-ui.api-platform .btn.execute,
+#swagger-ui.api-platform .btn.authorize {
+  background: var(--grid-time-red);
+  border-color: var(--grid-time-red);
+  color: #fff;
+}
+
+#swagger-ui.api-platform .opblock.opblock-get .opblock-summary {
+  border-color: var(--grid-time-red);
+}
+
+#swagger-ui.api-platform .opblock.opblock-get .opblock-section-header {
+  background: rgba(225, 6, 0, 0.1);
+}
+
+#swagger-ui.api-platform .btn.execute:hover,
+#swagger-ui.api-platform .btn.authorize:hover {
+  background: var(--grid-time-red-dark);
+  border-color: var(--grid-time-red-dark);
+}
+
+#swagger-ui.api-platform .btn.cancel,
+#swagger-ui.api-platform .btn.try-out__btn,
+#swagger-ui.api-platform .btn.clear {
+  border-color: var(--grid-time-text-muted);
+  color: var(--grid-time-text);
+}
+
+#swagger-ui.api-platform input[type='text'],
+#swagger-ui.api-platform input[type='password'],
+#swagger-ui.api-platform input[type='search'],
+#swagger-ui.api-platform textarea,
+#swagger-ui.api-platform select {
+  background: var(--grid-time-carbon);
+  border-color: var(--grid-time-border);
+  color: var(--grid-time-text);
+}
+
+#swagger-ui.api-platform input:focus,
+#swagger-ui.api-platform select:focus,
+#swagger-ui.api-platform textarea:focus,
+#swagger-ui.api-platform button:focus-visible,
+.grid-time-api-brand:focus-visible {
+  outline: 2px solid var(--grid-time-red);
+  outline-offset: 2px;
+}
+
+#swagger-ui.api-platform .highlight-code,
+#swagger-ui.api-platform .microlight,
+#swagger-ui.api-platform .model-box,
+#swagger-ui.api-platform section.models .model-container {
+  background: var(--grid-time-carbon);
+}
+
+#swagger-ui.api-platform .model-box-control,
+#swagger-ui.api-platform .model-toggle,
+#swagger-ui.api-platform .models-control,
+#swagger-ui.api-platform .models-control:focus,
+#swagger-ui.api-platform .model-box-control:focus {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--grid-time-text);
+}
+
+#swagger-ui.api-platform .model-box-control:hover,
+#swagger-ui.api-platform .models-control:hover {
+  background: var(--grid-time-panel-soft);
+}
+
+#swagger-ui.api-platform section.models .model-container,
+#swagger-ui.api-platform section.models .model-container * {
+  background-color: transparent !important;
+}
+
+#swagger-ui.api-platform section.models .model-container button.model-box-control,
+#swagger-ui.api-platform section.models .model-container button.models-control {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: var(--grid-time-carbon) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+#swagger-ui.api-platform section.models .model-container button.model-box-control *,
+#swagger-ui.api-platform section.models .model-container button.models-control * {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+#swagger-ui.api-platform .opblock .opblock-section-header h4,
+#swagger-ui.api-platform .opblock .opblock-section-header label,
+#swagger-ui.api-platform .parameters-col_name,
+#swagger-ui.api-platform .parameters-col_description,
+#swagger-ui.api-platform .parameter__name,
+#swagger-ui.api-platform .parameter__type,
+#swagger-ui.api-platform .parameter__in,
+#swagger-ui.api-platform .responses-table .response-col_status,
+#swagger-ui.api-platform .responses-table .response-col_description,
+#swagger-ui.api-platform .responses-table .response-col_links,
+#swagger-ui.api-platform .tab li,
+#swagger-ui.api-platform .tab li button {
+  color: var(--grid-time-text) !important;
+}
+
+#swagger-ui.api-platform .parameter__name.required span,
+#swagger-ui.api-platform .parameter__name.required::after {
+  color: var(--grid-time-red) !important;
+}
+
+#swagger-ui.api-platform .tab li {
+  border-color: var(--grid-time-border);
+}
+
+#swagger-ui.api-platform .tab li.active {
+  border-bottom-color: var(--grid-time-red);
+}
+
+@media (max-width: 768px) {
+  #swagger-ui.api-platform .wrapper,
+  #formats {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  #swagger-ui.api-platform .info {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}

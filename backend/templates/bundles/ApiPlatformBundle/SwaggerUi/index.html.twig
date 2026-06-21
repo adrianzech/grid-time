@@ -1,0 +1,19 @@
+{% extends '@!ApiPlatform/SwaggerUi/index.html.twig' %}
+
+{% block title %}
+    <title>Grid Time API</title>
+{% endblock %}
+
+{% block stylesheet %}
+    {{ parent() }}
+    {% if not is_scalar %}
+        <link rel="stylesheet" href="{{ asset('bundles/apiplatform/grid-time.css', assetPackage) }}">
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+    <header class="grid-time-api-header">
+        <a class="grid-time-api-brand" href="/">Grid Time</a>
+        <span class="grid-time-api-label">API</span>
+    </header>
+{% endblock %}
