@@ -729,7 +729,10 @@ function endOfLocalDay(date: Date): Date {
 
 function getWeekendWindow(date: Date): { start: Date, end: Date } {
   const start = startOfLocalDay(date)
-  start.setDate(start.getDate() + 5 - start.getDay())
+  const day = start.getDay()
+  const daysToFriday = day === 0 ? -2 : 5 - day
+
+  start.setDate(start.getDate() + daysToFriday)
 
   const end = endOfLocalDay(start)
   end.setDate(end.getDate() + 2)
