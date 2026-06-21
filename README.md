@@ -17,27 +17,38 @@ Supported series:
 - Composer
 - Bun
 
-Configure `APP_SECRET`, `API_KEY_PEPPER` and `CORS_ALLOW_ORIGIN` for Symfony. Configure PostgreSQL with `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_SERVER_VERSION` and `DATABASE_CHARSET`. The Nuxt server additionally requires `NUXT_INTERNAL_API_BASE` and `NUXT_FRONTEND_API_KEY`.
+## Environment configuration
+
+Use local override files for development. Symfony loads `backend/.env.local` after its committed defaults, while Nuxt reads `frontend/.env`; start the latter from `frontend/.env.example`. Do not commit either local file.
+
+| Area        | Variables                                                                                                                              | Purpose                                                                        |
+|-------------|----------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| Symfony     | `APP_SECRET`, `API_KEY_PEPPER`, `CORS_ALLOW_ORIGIN`                                                                                    | Application secrets and the browser-origin allowlist.                          |
+| PostgreSQL  | `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_SERVER_VERSION`, `DATABASE_CHARSET` | Database connection settings used by Symfony and Docker Compose.               |
+| Nuxt server | `NUXT_INTERNAL_API_BASE`, `NUXT_FRONTEND_API_KEY`                                                                                      | The server-side API origin and internal API key used by Nuxt's schedule proxy. |
+
+`NUXT_FRONTEND_API_KEY` is a server secret. Never expose it through a `NUXT_PUBLIC_*` variable or commit it to the repository.
 
 ## Container images
 
-Both Dockerfiles use the repository root as their build context. Build them from
-the repository root:
+Both Dockerfiles use the repository root as their build context. Build them from the repository root:
 
 ```bash
 docker build -f docker/build/backend/Dockerfile -t grid-time-backend .
 docker build -f docker/build/frontend/Dockerfile --target production -t grid-time-frontend .
 ```
 
-Runtime secrets and service URLs must be passed as container environment
-variables; they are intentionally excluded from the image build context.
+Runtime secrets and service URLs must be passed as container environment variables; they are intentionally excluded from the image build context.
 
 ## Docker Compose deployment
 
-The deployment Compose configuration requires `.env`, `backend.env` and
-`frontend.env`. Configure their values before starting the services; do not
-commit them. Run the following commands from the directory containing
-`compose.yml`.
+The deployment configuration and its templates live in `docker/compose/`:
+
+- `.env` configures the domain and PostgreSQL service.
+- `backend.env` configures Symfony secrets, runtime mode and CORS.
+- `frontend.env` configures Nuxt's runtime mode and server-side API proxy.
+
+Review and replace all example values before deploying. Run the following commands from `docker/compose/`, the directory containing `compose.yml`.
 
 Pull the published images and start the application:
 
@@ -58,9 +69,7 @@ Create the internal API key used exclusively by the Nuxt server:
 docker compose exec backend php bin/console api-key:create "Frontend" --internal
 ```
 
-The command prints the complete key once. Set that value as
-`NUXT_FRONTEND_API_KEY` in `frontend.env`, then recreate the frontend so it
-receives the new environment variable:
+The command prints the complete key once. Set that value as `NUXT_FRONTEND_API_KEY` in `frontend.env`, then recreate the frontend so it receives the new environment variable:
 
 ```bash
 docker compose up -d --force-recreate frontend
@@ -78,16 +87,6 @@ Check the service status and follow logs when troubleshooting:
 docker compose ps
 docker compose logs -f
 ```
-
-## Backend setup
-
-```bash
-cd backend
-composer install
-php bin/console doctrine:migrations:migrate --no-interaction
-```
-
-All schedule timestamps are stored in UTC. Scrapers are idempotent and can be run repeatedly.
 
 ## Schedule scrapers
 
@@ -131,7 +130,7 @@ Create a third-party key (120 requests/minute by default):
 
 ```bash
 cd backend
-php bin/console api-key:create "Partner name"
+php bin/console api-key:create "App"
 ```
 
 The complete key is printed once only. Manage keys with:
@@ -144,13 +143,13 @@ php bin/console api-key:revoke <identifier>
 Create the first-party Nuxt key with:
 
 ```bash
-php bin/console api-key:create "Nuxt frontend" --internal
+php bin/console api-key:create "Frontend" --internal
 ```
 
 Configure it only as a Nuxt server secret:
 
 ```env
-NUXT_INTERNAL_API_BASE=http://frankenphp
+NUXT_INTERNAL_API_BASE=http://backend:8000
 NUXT_FRONTEND_API_KEY=gt_live_<identifier>_<secret>
 ```
 
@@ -158,13 +157,51 @@ Nuxt serves browser schedule requests through `/_schedule`; this server-side pro
 
 See [API access documentation](docs/api-access.md) for security, rate limiting and Traefik routing requirements.
 
+## Backend setup
+
+Create `backend/.env.local` with development-safe values for the Symfony, PostgreSQL and CORS variables listed above. Then install dependencies and apply the database schema:
+
+```bash
+cd backend
+composer install
+php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+All schedule timestamps are stored in UTC. Scrapers are idempotent and can be run repeatedly.
+
+## Frontend setup
+
+Create the local Nuxt environment file, set the internal Symfony origin and an internal API key, then install dependencies:
+
+```bash
+cd frontend
+cp .env.example .env
+# Set NUXT_INTERNAL_API_BASE and NUXT_FRONTEND_API_KEY in .env.
+bun install
+```
+
 ## Verification
+
+Validate the Docker Compose configuration before deploying:
+
+```bash
+cd docker/compose
+docker compose config --quiet
+```
+
+Run backend checks:
 
 ```bash
 cd backend
 composer ci-check
+```
 
-cd ../frontend
+Run frontend checks:
+
+```bash
+cd frontend
 bun run lint
 bun run build
 ```
+
+All checks must pass before release.
