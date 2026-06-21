@@ -52,8 +52,6 @@ services:
             - traefik.http.services.gridtime-frontend.loadbalancer.server.port=3000
         env_file:
             - frontend.env
-        volumes:
-            - /opt/docker/appdata/gridtime/frontend/data:/app/.data
         networks:
             - gridtime
             - proxy
