@@ -237,6 +237,63 @@ body {
   color: var(--grid-time-red) !important;
 }
 
+#swagger-ui.api-platform .dialog-ux .modal-ux {
+  background: var(--grid-time-panel);
+  border-color: var(--grid-time-border);
+  color: var(--grid-time-text);
+}
+
+#swagger-ui.api-platform .dialog-ux .modal-ux-header,
+#swagger-ui.api-platform .dialog-ux .auth-container {
+  border-color: var(--grid-time-border);
+}
+
+#swagger-ui.api-platform .dialog-ux .modal-ux h2,
+#swagger-ui.api-platform .dialog-ux .modal-ux h3,
+#swagger-ui.api-platform .dialog-ux .modal-ux h4,
+#swagger-ui.api-platform .dialog-ux .modal-ux h5,
+#swagger-ui.api-platform .dialog-ux .modal-ux label,
+#swagger-ui.api-platform .dialog-ux .modal-ux p {
+  color: var(--grid-time-text);
+}
+
+#swagger-ui.api-platform .dialog-ux .modal-ux-header .close-modal {
+  background: var(--grid-time-panel-soft);
+  border: 1px solid var(--grid-time-border);
+  border-radius: 0.25rem;
+  margin-right: 0.75rem;
+}
+
+#swagger-ui.api-platform .dialog-ux .modal-ux-header .close-modal svg {
+  fill: var(--grid-time-text);
+}
+
+#swagger-ui.api-platform .dialog-ux .modal-ux .btn.modal-btn {
+  border-color: var(--grid-time-red);
+  color: var(--grid-time-red);
+}
+
+#swagger-ui.api-platform .dialog-ux .modal-ux .btn.modal-btn:hover,
+#swagger-ui.api-platform .dialog-ux .modal-ux .btn.modal-btn.btn-done {
+  background: var(--grid-time-red);
+  border-color: var(--grid-time-red);
+  color: #fff;
+}
+
+#swagger-ui.api-platform .dialog-ux .modal-ux .btn.modal-btn.authorize {
+  background: var(--grid-time-red);
+  border-color: var(--grid-time-red);
+  color: #fff;
+}
+
+#swagger-ui.api-platform .dialog-ux .modal-ux .auth-container input[type='password'],
+#swagger-ui.api-platform .dialog-ux .modal-ux .auth-container input[type='text'] {
+  box-sizing: border-box;
+  display: block;
+  max-width: 100%;
+  width: 100%;
+}
+
 #swagger-ui.api-platform .tab li {
   border-color: var(--grid-time-border);
 }

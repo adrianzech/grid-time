@@ -6,6 +6,12 @@ api_platform:
     enable_scalar: false
     graphql:
         enabled: false
+    swagger:
+        persist_authorization: true
+        api_keys:
+            ApiKeyAuth:
+                name: X-API-Key
+                type: header
     defaults:
         stateless: true
         cache_headers:
