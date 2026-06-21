@@ -1,0 +1,87 @@
+services:
+    backend:
+        container_name: gridtime-backend
+        image: ghcr.io/adrianzech/grid-time-backend:latest
+        restart: unless-stopped
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:8000/healthz" ]
+            interval: 30s
+            timeout: 3s
+            start_period: 40s
+            retries: 3
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=proxy
+            - traefik.http.routers.gridtime-backend.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/bundles/apiplatform`))
+            - traefik.http.routers.gridtime-backend.entrypoints=websecure
+            - traefik.http.routers.gridtime-backend.tls=true
+            - traefik.http.routers.gridtime-backend.tls.certresolver=le
+            - traefik.http.routers.gridtime-backend.priority=100
+            - traefik.http.services.gridtime-backend.loadbalancer.server.port=8000
+        env_file:
+            - backend.env
+        environment:
+            DATABASE_HOST: ${DATABASE_HOST}
+            DATABASE_PORT: ${DATABASE_PORT}
+            DATABASE_NAME: ${DATABASE_NAME}
+            DATABASE_USER: ${DATABASE_USER}
+            DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+            DATABASE_SERVER_VERSION: ${DATABASE_SERVER_VERSION}
+            DATABASE_CHARSET: ${DATABASE_CHARSET}
+        volumes:
+            - /opt/docker/appdata/gridtime/backend/var:/srv/app/var
+        networks:
+            - gridtime
+            - proxy
+        depends_on:
+            database:
+                condition: service_healthy
+
+    frontend:
+        container_name: gridtime-frontend
+        image: ghcr.io/adrianzech/grid-time-frontend:latest
+        restart: unless-stopped
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=proxy
+            - traefik.http.routers.gridtime-frontend.rule=Host(`${DOMAIN}`)
+            - traefik.http.routers.gridtime-frontend.entrypoints=websecure
+            - traefik.http.routers.gridtime-frontend.tls=true
+            - traefik.http.routers.gridtime-frontend.tls.certresolver=le
+            - traefik.http.routers.gridtime-frontend.priority=10
+            - traefik.http.services.gridtime-frontend.loadbalancer.server.port=3000
+        env_file:
+            - frontend.env
+        volumes:
+            - /opt/docker/appdata/gridtime/frontend/data:/app/.data
+        networks:
+            - gridtime
+            - proxy
+        depends_on:
+            backend:
+                condition: service_healthy
+
+    database:
+        container_name: gridtime-database
+        image: postgres:18.4-alpine
+        restart: unless-stopped
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+            interval: 10s
+            timeout: 5s
+            start_period: 30s
+            retries: 5
+        environment:
+            POSTGRES_DB: ${DATABASE_NAME}
+            POSTGRES_USER: ${DATABASE_USER}
+            POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+        volumes:
+            - /opt/docker/appdata/gridtime/postgres:/var/lib/postgresql
+        networks:
+            - gridtime
+
+networks:
+    gridtime:
+        driver: bridge
+    proxy:
+        external: true

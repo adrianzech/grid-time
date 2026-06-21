@@ -32,6 +32,53 @@ docker build -f docker/build/frontend/Dockerfile --target production -t grid-tim
 Runtime secrets and service URLs must be passed as container environment
 variables; they are intentionally excluded from the image build context.
 
+## Docker Compose deployment
+
+The deployment Compose configuration requires `.env`, `backend.env` and
+`frontend.env`. Configure their values before starting the services; do not
+commit them. Run the following commands from the directory containing
+`compose.yml`.
+
+Pull the published images and start the application:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Once the database is healthy, apply pending schema migrations:
+
+```bash
+docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+Create the internal API key used exclusively by the Nuxt server:
+
+```bash
+docker compose exec backend php bin/console api-key:create "Frontend" --internal
+```
+
+The command prints the complete key once. Set that value as
+`NUXT_FRONTEND_API_KEY` in `frontend.env`, then recreate the frontend so it
+receives the new environment variable:
+
+```bash
+docker compose up -d --force-recreate frontend
+```
+
+Import all supported schedules for a season (the default year is `2026`):
+
+```bash
+docker compose exec backend php bin/console app:scrape:all --year=2026
+```
+
+Check the service status and follow logs when troubleshooting:
+
+```bash
+docker compose ps
+docker compose logs -f
+```
+
 ## Backend setup
 
 ```bash
