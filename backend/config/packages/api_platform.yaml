@@ -2,6 +2,10 @@ api_platform:
     title: Grid Time API
     version: 1.0.0
     show_webby: false
+    enable_re_doc: false
+    enable_scalar: false
+    graphql:
+        enabled: false
     defaults:
         stateless: true
         cache_headers:
