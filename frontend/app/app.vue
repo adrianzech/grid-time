@@ -72,19 +72,19 @@
         No race weekends are scheduled for this weekend.
       </section>
 
-      <header class="flex flex-col gap-5 border-b border-white/10 py-5 md:flex-row md:items-end md:justify-between">
+      <header class="flex flex-col gap-4 border-b border-white/10 py-4 sm:gap-5 sm:py-5 md:flex-row md:items-end md:justify-between">
         <div class="space-y-3">
           <div class="flex items-center gap-3">
             <span class="text-xs font-semibold uppercase tracking-[0.26em] text-race-red">Grid Time</span>
           </div>
 
           <div class="max-w-5xl">
-            <div class="inline-grid grid-cols-3 gap-1 rounded-lg border border-white/10 bg-panel p-2 shadow-xl shadow-black/20">
+            <div class="grid w-full grid-cols-3 gap-1 rounded-lg border border-white/10 bg-panel p-2 shadow-xl shadow-black/20 sm:inline-grid sm:w-auto">
               <button
                 v-for="category in seriesCategories"
                 :key="category"
                 type="button"
-                class="rounded-md px-4 py-2 text-sm font-bold transition"
+                class="min-h-11 rounded-md px-2 py-2 text-sm font-bold transition sm:px-4"
                 :class="category === selectedCategory ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
                 :aria-pressed="category === selectedCategory"
                 @click="selectCategory(category)"
@@ -111,28 +111,28 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 rounded-lg border border-white/10 bg-panel p-2 shadow-2xl shadow-black/20">
-          <div class="px-3 py-2">
-            <p class="text-xs text-zinc-500">
+        <div class="grid w-full grid-cols-3 gap-1 rounded-lg border border-white/10 bg-panel p-1.5 shadow-2xl shadow-black/20 sm:w-auto sm:gap-2 sm:p-2">
+          <div class="px-2 py-1.5 sm:px-3 sm:py-2">
+            <p class="text-[11px] text-zinc-500 sm:text-xs">
               Season
             </p>
-            <p class="text-lg font-bold text-white">
+            <p class="text-base font-bold text-white sm:text-lg">
               {{ seasonYear }}
             </p>
           </div>
-          <div class="border-x border-white/10 px-3 py-2">
-            <p class="text-xs text-zinc-500">
+          <div class="border-x border-white/10 px-2 py-1.5 sm:px-3 sm:py-2">
+            <p class="text-[11px] text-zinc-500 sm:text-xs">
               Events
             </p>
-            <p class="text-lg font-bold text-white">
+            <p class="text-base font-bold text-white sm:text-lg">
               {{ events.length }}
             </p>
           </div>
-          <div class="px-3 py-2">
-            <p class="text-xs text-zinc-500">
+          <div class="px-2 py-1.5 sm:px-3 sm:py-2">
+            <p class="text-[11px] text-zinc-500 sm:text-xs">
               Sessions
             </p>
-            <p class="text-lg font-bold text-white">
+            <p class="text-base font-bold text-white sm:text-lg">
               {{ sessions.length }}
             </p>
           </div>
