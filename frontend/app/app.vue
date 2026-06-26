@@ -148,7 +148,7 @@
               >
                 <button
                   type="button"
-                  class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-race-red sm:grid-cols-[88px_92px_minmax(180px,1fr)_minmax(120px,1fr)_118px_112px] sm:items-center sm:gap-x-4 sm:px-4 sm:py-3"
+                  class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-race-red sm:grid-cols-[88px_92px_minmax(180px,1fr)_minmax(120px,1fr)_118px_112px_40px] sm:items-center sm:gap-x-2 sm:px-4 sm:py-3"
                   :class="item.session && isSessionLive(item.session, now) ? 'bg-race-red/5 hover:bg-race-red/10' : ''"
                   :aria-expanded="isWeekendItemExpanded(item)"
                   @click="toggleWeekendItem(item)"
@@ -200,12 +200,24 @@
                     </span>
                   </span>
 
-                  <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end gap-2 sm:col-start-6 sm:row-span-1 sm:row-start-1 sm:justify-end">
-                    <span class="text-2xl font-black tabular-nums text-white sm:text-right">
+                  <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end gap-2 sm:col-start-6 sm:row-span-1 sm:row-start-1">
+                    <span class="text-2xl font-black tabular-nums text-white sm:min-w-24 sm:text-right">
                       {{ item.session ? formatSessionTime(item.session) : '—' }}
                     </span>
+                  </span>
+
+                  <span class="hidden sm:flex sm:col-start-7 sm:row-start-1 sm:items-center sm:justify-end">
                     <span
-                      class="grid size-9 place-items-center rounded-md bg-white/5 text-lg text-white transition"
+                      class="grid size-9 shrink-0 place-items-center rounded-md bg-white/5 text-lg text-white transition"
+                      :class="isWeekendItemExpanded(item) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
+                    >
+                      <ChevronDown :size="18" />
+                    </span>
+                  </span>
+
+                  <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end sm:hidden">
+                    <span
+                      class="grid size-9 shrink-0 place-items-center rounded-md bg-white/5 text-lg text-white transition"
                       :class="isWeekendItemExpanded(item) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
                     >
                       <ChevronDown :size="18" />
@@ -224,7 +236,7 @@
                     <article
                       v-for="session in weekendItemSessions(item)"
                       :key="session['@id']"
-                      class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[96px_minmax(0,1fr)_150px] md:items-center md:gap-x-1 md:gap-y-4"
+                      class="grid gap-4 border-l-2 px-4 py-3 transition md:grid-cols-[96px_minmax(0,1fr)_112px_40px] md:items-center md:gap-x-2 md:gap-y-4"
                       :class="sessionRowClass(session)"
                     >
                       <div class="flex items-center gap-3 md:items-start">
@@ -245,7 +257,7 @@
                             {{ formatSessionMonth(session) }}
                           </div>
                         </div>
-                        <div class="hidden h-12 w-px bg-white/10 md:block" />
+                        <div class="hidden h-10 w-px bg-white/10 md:block" />
                         <div class="text-xs font-semibold text-zinc-500 md:hidden">
                           {{ formatWeekendSessionDate(session) }}
                         </div>
@@ -268,26 +280,31 @@
                         </div>
                       </div>
 
-                      <div class="flex items-center justify-between gap-3 md:flex-col md:items-end md:justify-center">
-                        <div class="text-right">
+                      <div class="flex items-center justify-end">
+                        <div class="relative min-w-24 text-right">
                           <p
-                            class="text-3xl font-black tabular-nums"
+                            class="text-2xl font-black tabular-nums"
                             :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
                           >
                             {{ formatSessionTime(session) }}
                           </p>
-                          <p class="mt-1 text-xs text-zinc-500">
+                          <p class="absolute right-0 top-full mt-0.5 text-xs text-zinc-500">
                             {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
                           </p>
                         </div>
+                      </div>
+
+                      <div class="flex items-center justify-end">
                         <a
                           :href="session.sourceUrl"
                           target="_blank"
                           rel="noreferrer"
-                          class="text-xs font-semibold text-zinc-500 transition hover:text-race-red"
+                          aria-label="Official source"
+                          title="Official source"
+                          class="grid size-9 shrink-0 place-items-center rounded-md bg-white/5 text-zinc-500 transition hover:bg-race-red/20 hover:text-race-red"
                           @click.stop
                         >
-                          Official source
+                          <ExternalLink :size="16" />
                         </a>
                       </div>
                     </article>
@@ -464,7 +481,7 @@
                         </span>
                       </span>
                       <span
-                        class="grid size-9 place-items-center rounded-md bg-white/5 text-lg text-white transition"
+                        class="grid size-9 shrink-0 place-items-center rounded-md bg-white/5 text-lg text-white transition"
                         :class="isEventExpanded(event) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
                       >
                         <ChevronDown :size="18" />
@@ -483,7 +500,7 @@
                       <article
                         v-for="session in eventSessions(event)"
                         :key="session['@id']"
-                        class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[96px_minmax(0,1fr)_150px] md:items-center md:gap-x-1 md:gap-y-4"
+                        class="grid gap-4 border-l-2 px-4 py-3 transition md:grid-cols-[96px_minmax(0,1fr)_112px_40px] md:items-center md:gap-x-2 md:gap-y-4"
                         :class="sessionRowClass(session)"
                       >
                         <div class="flex items-center gap-3 md:items-start">
@@ -504,7 +521,7 @@
                               {{ formatSessionMonth(session) }}
                             </div>
                           </div>
-                          <div class="hidden h-12 w-px bg-white/10 md:block" />
+                          <div class="hidden h-10 w-px bg-white/10 md:block" />
                           <div class="text-xs font-semibold uppercase tracking-wide text-race-red md:hidden">
                             {{ formatSessionDateLong(session) }}
                           </div>
@@ -527,26 +544,31 @@
                           </div>
                         </div>
 
-                        <div class="flex items-center justify-between gap-3 md:flex-col md:items-end md:justify-center">
-                          <div class="text-right">
+                        <div class="flex items-center justify-end">
+                          <div class="relative min-w-24 text-right">
                             <p
-                              class="text-3xl font-black tabular-nums"
+                              class="text-2xl font-black tabular-nums"
                               :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
                             >
                               {{ formatSessionTime(session) }}
                             </p>
-                            <p class="mt-1 text-sm text-zinc-500">
+                            <p class="absolute right-0 top-full mt-0.5 text-xs text-zinc-500">
                               {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
                             </p>
                           </div>
+                        </div>
+
+                        <div class="flex items-center justify-end">
                           <a
                             :href="session.sourceUrl"
                             target="_blank"
                             rel="noreferrer"
-                            class="text-xs font-semibold text-zinc-500 transition hover:text-race-red"
+                            aria-label="Official source"
+                            title="Official source"
+                            class="grid size-9 shrink-0 place-items-center rounded-md bg-white/5 text-zinc-500 transition hover:bg-race-red/20 hover:text-race-red"
                             @click.stop
                           >
-                            Official source
+                            <ExternalLink :size="16" />
                           </a>
                         </div>
                       </article>
@@ -578,7 +600,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronDown } from 'lucide-vue-next'
+import { ChevronDown, ExternalLink } from 'lucide-vue-next'
 import type { ApiEvent, ApiSession, ScheduleCacheEntry } from '~/composables/useScheduleCache'
 
 const seasonYear = 2026
