@@ -3,75 +3,6 @@
     <NuxtRouteAnnouncer />
 
     <main class="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-      <section
-        v-if="quickLookItems.length"
-        class="mb-4"
-        aria-labelledby="quick-look-heading"
-      >
-        <div class="mb-3">
-          <div>
-            <p class="text-xs font-bold uppercase tracking-[0.22em] text-race-red">
-              This weekend
-            </p>
-          </div>
-        </div>
-
-        <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-          <button
-            v-for="item in quickLookItems"
-            :key="`${item.series.code}-${item.event['@id']}`"
-            type="button"
-            class="w-72 shrink-0 snap-start rounded-lg border border-white/10 bg-panel p-4 text-left shadow-xl shadow-black/20 transition hover:border-race-red/50 hover:bg-panel-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-race-red"
-            :class="item.session && isSessionLive(item.session, now) ? 'border-race-red/60 bg-race-red/10 hover:border-race-red hover:bg-race-red/15' : ''"
-            @click="openQuickLookItem(item)"
-          >
-            <span class="flex items-start justify-between gap-3">
-              <span>
-                <span class="mt-1 block text-sm font-bold text-zinc-300">
-                  {{ item.series.name }}
-                </span>
-              </span>
-              <ChevronDown :size="18" class="mt-1 text-zinc-500" />
-            </span>
-            <span
-              class="mt-5 block truncate text-lg font-black text-white"
-              :title="formatEventTitle(item.event)"
-            >
-              {{ formatEventTitle(item.event) }}
-            </span>
-            <span
-              v-if="item.session"
-              class="mt-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500"
-            >
-              {{ formatSessionDateLong(item.session) }}
-            </span>
-            <span class="mt-3 flex items-end justify-between gap-3">
-              <span class="min-w-0">
-                <span class="block truncate text-sm font-bold text-zinc-300">
-                  {{ item.session ? item.session.name : 'Weekend complete' }}
-                </span>
-                <span
-                  class="mt-1 block text-xs"
-                  :class="item.session && isSessionLive(item.session, now) ? 'font-semibold text-race-red' : 'text-zinc-500'"
-                >
-                  {{ item.session && isSessionLive(item.session, now) ? 'Live now' : 'Next session' }}
-                </span>
-              </span>
-              <span class="shrink-0 text-right text-lg font-black tabular-nums text-white">
-                {{ item.session ? formatSessionTime(item.session) : '—' }}
-              </span>
-            </span>
-          </button>
-        </div>
-      </section>
-
-      <section
-        v-else-if="isQuickLookReady"
-        class="mb-4 rounded-lg border border-white/10 bg-panel p-4 text-sm text-zinc-500"
-      >
-        No race weekends are scheduled for this weekend.
-      </section>
-
       <header class="flex flex-col gap-4 border-b border-white/10 py-4 sm:gap-5 sm:py-5 md:flex-row md:items-end md:justify-between">
         <div class="space-y-3">
           <div class="flex items-center gap-3">
@@ -79,21 +10,33 @@
           </div>
 
           <div class="max-w-5xl">
-            <div class="grid w-full grid-cols-3 gap-1 rounded-lg border border-white/10 bg-panel p-2 shadow-xl shadow-black/20 sm:inline-grid sm:w-auto">
+            <div class="grid w-full grid-cols-2 gap-1 rounded-lg border border-white/10 bg-panel p-2 shadow-xl shadow-black/20 sm:inline-grid sm:w-auto sm:grid-cols-4">
+              <button
+                type="button"
+                class="min-h-11 rounded-md px-2 py-2 text-sm font-bold transition sm:px-4"
+                :class="selectedView === 'weekend' ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
+                :aria-pressed="selectedView === 'weekend'"
+                @click="selectWeekendView"
+              >
+                This weekend
+              </button>
               <button
                 v-for="category in seriesCategories"
                 :key="category"
                 type="button"
                 class="min-h-11 rounded-md px-2 py-2 text-sm font-bold transition sm:px-4"
-                :class="category === selectedCategory ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
-                :aria-pressed="category === selectedCategory"
-                @click="selectCategory(category)"
+                :class="selectedView === category ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
+                :aria-pressed="selectedView === category"
+                @click="selectCategoryView(category)"
               >
                 {{ category }}
               </button>
             </div>
 
-            <div class="-mx-4 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+            <div
+              v-if="selectedView !== 'weekend'"
+              class="-mx-4 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+            >
               <button
                 v-for="series in visibleSeries"
                 :key="series.code"
@@ -111,7 +54,10 @@
           </div>
         </div>
 
-        <div class="grid w-full grid-cols-3 gap-1 rounded-lg border border-white/10 bg-panel p-1.5 shadow-2xl shadow-black/20 sm:w-auto sm:gap-2 sm:p-2">
+        <div
+          v-if="selectedView !== 'weekend'"
+          class="grid w-full grid-cols-3 gap-1 rounded-lg border border-white/10 bg-panel p-1.5 shadow-2xl shadow-black/20 sm:w-auto sm:gap-2 sm:p-2"
+        >
           <div class="px-2 py-1.5 sm:px-3 sm:py-2">
             <p class="text-[11px] text-zinc-500 sm:text-xs">
               Season
@@ -140,52 +86,22 @@
       </header>
 
       <section class="py-5">
-        <section class="mb-4 rounded-lg border border-race-red/25 bg-race-red/10 p-4 shadow-2xl shadow-race-red/10 sm:p-5">
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div class="min-w-0">
-              <p class="text-xs font-bold uppercase tracking-[0.22em] text-race-red">
-                Next up
-              </p>
-              <h2
-                class="mt-3 max-w-3xl text-2xl font-black text-white sm:text-3xl"
-                :title="nextSessionEvent?.name"
-              >
-                {{ nextSessionEvent ? formatEventTitle(nextSessionEvent) : 'No upcoming session' }}
-              </h2>
-              <p class="mt-3 text-xl font-black text-white sm:text-2xl">
-                {{ nextSession?.name ?? 'Schedule unavailable' }}
-              </p>
-            </div>
-
-            <div class="lg:min-w-64 lg:text-right">
-              <p class="text-sm text-zinc-400">
-                {{ nextSession ? formatSessionDateLong(nextSession) : '-' }}
-              </p>
-              <p class="mt-1 text-4xl font-black tabular-nums text-white">
-                {{ nextSession ? formatSessionTime(nextSession) : '--:--' }}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <div
-          ref="raceWeekendsSection"
+        <section
+          v-if="selectedView === 'weekend'"
           class="overflow-hidden rounded-lg border border-white/10 bg-panel shadow-2xl shadow-black/20"
+          aria-labelledby="weekend-overview-heading"
         >
           <div class="border-b border-white/10 p-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 class="text-lg font-bold text-white">
-                  Race weekends
+                <h2
+                  id="weekend-overview-heading"
+                  class="text-lg font-bold text-white"
+                >
+                  This weekend
                 </h2>
                 <p class="text-sm text-zinc-500">
-                  Current and upcoming {{ selectedSeries.name }} weekends
-                  <span
-                    v-if="isRefreshing"
-                    class="ml-2 text-race-red"
-                  >
-                    Updating...
-                  </span>
+                  Current weekend across all racing series
                 </p>
               </div>
 
@@ -214,195 +130,349 @@
             leave-to-class="opacity-0 translate-y-1"
           >
             <div
-              v-if="pending"
-              :key="`${selectedSeriesCode}-loading`"
-              class="grid min-h-80 place-items-center p-6 text-zinc-400"
+              v-if="!isQuickLookReady && !quickLookItems.length"
+              key="weekend-loading"
+              class="grid min-h-56 place-items-center p-6 text-zinc-400"
             >
-              Loading schedule...
+              Loading weekend schedule...
             </div>
 
             <div
-              v-else-if="errorMessage"
-              :key="`${selectedSeriesCode}-error`"
-              class="m-4 rounded-lg border border-race-red/40 bg-race-red/10 p-4 text-sm text-red-100"
-            >
-              {{ errorMessage }}
-            </div>
-
-            <div
-              v-else-if="selectedEvent"
-              :key="`${selectedSeriesCode}-events`"
+              v-else-if="quickLookItems.length"
+              key="weekend-list"
               class="divide-y divide-white/10"
             >
-              <div
-                v-if="refreshErrorMessage"
-                class="border-b border-race-red/30 bg-race-red/10 p-3 text-sm text-red-100"
+              <button
+                v-for="item in quickLookItems"
+                :key="`${item.series.code}-${item.event['@id']}`"
+                type="button"
+                class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-race-red sm:grid-cols-[92px_120px_minmax(0,1.2fr)_minmax(0,1fr)_112px] sm:items-center sm:p-4"
+                :class="item.session && isSessionLive(item.session, now) ? 'bg-race-red/5 hover:bg-race-red/10' : ''"
+                @click="openQuickLookItem(item)"
               >
-                {{ refreshErrorMessage }}
-              </div>
-
-              <section
-                v-for="event in upcomingEvents"
-                :key="event['@id']"
-                class="bg-panel"
-              >
-                <button
-                  type="button"
-                  class="grid w-full gap-4 p-4 text-left transition hover:bg-white/3 sm:grid-cols-[132px_minmax(0,1fr)_140px]"
-                  :class="isEventExpanded(event) ? 'bg-white/2' : ''"
-                  @click="toggleEvent(event)"
-                >
-                  <span class="block">
-                    <span class="block text-sm font-black uppercase tracking-wide text-race-red">
-                      {{ formatEventDateRange(event) }}
-                    </span>
-                    <span class="mt-2 block text-xs text-zinc-500">
-                      Round {{ event.roundNumber }}
-                    </span>
-                  </span>
-
-                  <span class="block min-w-0">
-                    <span class="flex min-w-0 flex-wrap items-center gap-2">
-                      <span
-                        class="truncate text-xl font-black text-white"
-                        :title="formatEventTitle(event)"
-                      >
-                        {{ formatEventTitle(event) }}
-                      </span>
-                      <span
-                        v-if="isEventActive(event, now)"
-                        class="rounded bg-race-red px-2 py-1 text-xs font-bold uppercase text-white"
-                      >
-                        Live weekend
-                      </span>
-                    </span>
-                    <span class="mt-2 block text-sm text-zinc-400">
-                      {{ event.location }}
-                      <span class="text-zinc-600">/</span>
-                      {{ eventSessions(event).length }} sessions
-                    </span>
-                  </span>
-
-                  <span class="flex items-center justify-between gap-3 sm:justify-end">
-                    <span class="text-right">
-                      <span class="block text-sm font-semibold text-zinc-300">
-                        {{ eventNextSessionLabel(event) }}
-                      </span>
-                    </span>
-                    <span
-                      class="grid size-9 place-items-center rounded-md bg-white/5 text-lg text-white transition"
-                      :class="isEventExpanded(event) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
-                    >
-                      <ChevronDown :size="18" />
-                    </span>
-                  </span>
-                </button>
-
-                <div
-                  v-if="isEventExpanded(event)"
-                  class="border-t border-white/10 bg-black/10"
-                >
-                  <div
-                    v-if="eventSessions(event).length"
-                    class="divide-y divide-white/10"
+                <span class="col-start-1 row-start-1 flex items-center sm:col-auto sm:row-auto">
+                  <span
+                    class="inline-flex h-6 w-[68px] items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
+                    :class="weekendStatusBadgeClass(item)"
                   >
-                    <article
-                      v-for="session in eventSessions(event)"
-                      :key="session['@id']"
-                      class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[112px_minmax(0,1fr)_150px]"
-                      :class="sessionRowClass(session)"
-                    >
-                      <div class="flex items-center gap-3 md:items-start">
-                        <div class="min-w-16">
-                          <div
-                            class="text-xs font-black uppercase tracking-wide"
-                            :class="isSessionCompleted(session) ? 'text-zinc-600' : 'text-race-red'"
-                          >
-                            {{ formatSessionWeekday(session) }}
-                          </div>
-                          <div
-                            class="mt-1 text-3xl font-black leading-none tabular-nums"
-                            :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
-                          >
-                            {{ formatSessionDay(session) }}
-                          </div>
-                          <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
-                            {{ formatSessionMonth(session) }}
-                          </div>
-                        </div>
-                        <div class="hidden h-12 w-px bg-white/10 md:block" />
-                        <div class="text-xs font-semibold uppercase tracking-wide text-race-red md:hidden">
-                          {{ formatSessionDateLong(session) }}
-                        </div>
-                      </div>
+                    {{ weekendStatusLabel(item) }}
+                  </span>
+                </span>
 
-                      <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-2">
-                          <p
-                            class="text-base font-black"
-                            :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
-                          >
-                            {{ session.name }}
-                          </p>
-                          <span
-                            class="rounded px-2 py-1 text-xs font-bold uppercase"
-                            :class="sessionStatusBadgeClass(session)"
-                          >
-                            {{ sessionStatusLabel(session) }}
-                          </span>
-                        </div>
-                        <p
-                          v-if="isNextSession(session)"
-                          class="mt-2 text-sm font-semibold text-race-red"
-                        >
-                          Next session
-                        </p>
-                      </div>
+                <span class="col-start-2 row-start-1 min-w-0 sm:order-first sm:col-auto sm:row-auto">
+                  <span class="block truncate text-sm font-black text-white">
+                    {{ item.series.name }}
+                  </span>
+                </span>
 
-                      <div class="flex items-center justify-between gap-3 md:flex-col md:items-end md:justify-center">
-                        <div class="text-right">
-                          <p
-                            class="text-3xl font-black tabular-nums"
-                            :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
-                          >
-                            {{ formatSessionTime(session) }}
-                          </p>
-                          <p class="mt-1 text-sm text-zinc-500">
-                            {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
-                          </p>
-                        </div>
-                        <a
-                          :href="session.sourceUrl"
-                          target="_blank"
-                          rel="noreferrer"
-                          class="text-xs font-semibold text-zinc-500 transition hover:text-race-red"
-                          @click.stop
-                        >
-                          Official source
-                        </a>
-                      </div>
-                    </article>
-                  </div>
-
-                  <div
-                    v-else
-                    class="p-4 text-sm text-zinc-500"
+                <span class="col-start-2 row-start-2 min-w-0 sm:col-auto sm:row-auto">
+                  <span
+                    class="block truncate text-base font-black text-white"
+                    :title="formatEventTitle(item.event)"
                   >
-                    No sessions match this filter.
-                  </div>
-                </div>
-              </section>
+                    {{ formatEventTitle(item.event) }}
+                  </span>
+                  <span class="mt-1 block truncate text-sm text-zinc-500">
+                    {{ item.event.location }}
+                  </span>
+                </span>
+
+                <span class="col-start-2 row-start-3 min-w-0 sm:col-auto sm:row-auto">
+                  <span class="block truncate text-sm font-bold text-zinc-300">
+                    {{ item.session ? item.session.name : 'Weekend complete' }}
+                  </span>
+                  <span
+                    v-if="item.session"
+                    class="mt-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500"
+                  >
+                    {{ formatSessionDateLong(item.session) }}
+                  </span>
+                </span>
+
+                <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end gap-2 sm:col-auto sm:row-auto sm:row-span-1 sm:justify-end">
+                  <span class="text-2xl font-black tabular-nums text-white sm:text-right">
+                    {{ item.session ? formatSessionTime(item.session) : '—' }}
+                  </span>
+                  <ChevronDown :size="18" class="-rotate-90 text-zinc-500" />
+                </span>
+              </button>
             </div>
 
             <div
               v-else
-              :key="`${selectedSeriesCode}-empty`"
-              class="grid min-h-80 place-items-center p-6 text-zinc-400"
+              key="weekend-empty"
+              class="p-4 text-sm text-zinc-500"
             >
-              No upcoming race weekend found.
+              No race weekends are scheduled for this weekend.
             </div>
           </Transition>
-        </div>
+        </section>
+
+        <template v-else>
+          <section class="mb-4 rounded-lg border border-race-red/25 bg-race-red/10 p-4 shadow-2xl shadow-race-red/10 sm:p-5">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div class="min-w-0">
+                <p class="text-xs font-bold uppercase tracking-[0.22em] text-race-red">
+                  Next up
+                </p>
+                <h2
+                  class="mt-3 max-w-3xl text-2xl font-black text-white sm:text-3xl"
+                  :title="nextSessionEvent?.name"
+                >
+                  {{ nextSessionEvent ? formatEventTitle(nextSessionEvent) : 'No upcoming session' }}
+                </h2>
+                <p class="mt-3 text-xl font-black text-white sm:text-2xl">
+                  {{ nextSession?.name ?? 'Schedule unavailable' }}
+                </p>
+              </div>
+
+              <div class="lg:min-w-64 lg:text-right">
+                <p class="text-sm text-zinc-400">
+                  {{ nextSession ? formatSessionDateLong(nextSession) : '-' }}
+                </p>
+                <p class="mt-1 text-4xl font-black tabular-nums text-white">
+                  {{ nextSession ? formatSessionTime(nextSession) : '--:--' }}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <div
+            ref="raceWeekendsSection"
+            class="overflow-hidden rounded-lg border border-white/10 bg-panel shadow-2xl shadow-black/20"
+          >
+            <div class="border-b border-white/10 p-4">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 class="text-lg font-bold text-white">
+                    Race weekends
+                  </h2>
+                  <p class="text-sm text-zinc-500">
+                    Current and upcoming {{ selectedSeries.name }} weekends
+                    <span
+                      v-if="isRefreshing"
+                      class="ml-2 text-race-red"
+                    >
+                      Updating...
+                    </span>
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-black/20 p-1">
+                  <button
+                    v-for="mode in timeModes"
+                    :key="mode.value"
+                    type="button"
+                    class="rounded-md px-3 py-2 text-sm font-bold transition"
+                    :class="timeMode === mode.value ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
+                    @click="selectTimeMode(mode.value)"
+                  >
+                    {{ mode.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <Transition
+              mode="out-in"
+              enter-active-class="transition duration-150 ease-out"
+              enter-from-class="opacity-0 translate-y-1"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-active-class="transition duration-150 ease-in"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 translate-y-1"
+            >
+              <div
+                v-if="pending"
+                :key="`${selectedSeriesCode}-loading`"
+                class="grid min-h-80 place-items-center p-6 text-zinc-400"
+              >
+                Loading schedule...
+              </div>
+
+              <div
+                v-else-if="errorMessage"
+                :key="`${selectedSeriesCode}-error`"
+                class="m-4 rounded-lg border border-race-red/40 bg-race-red/10 p-4 text-sm text-red-100"
+              >
+                {{ errorMessage }}
+              </div>
+
+              <div
+                v-else-if="selectedEvent"
+                :key="`${selectedSeriesCode}-events`"
+                class="divide-y divide-white/10"
+              >
+                <div
+                  v-if="refreshErrorMessage"
+                  class="border-b border-race-red/30 bg-race-red/10 p-3 text-sm text-red-100"
+                >
+                  {{ refreshErrorMessage }}
+                </div>
+
+                <section
+                  v-for="event in upcomingEvents"
+                  :key="event['@id']"
+                  class="bg-panel"
+                >
+                  <button
+                    type="button"
+                    class="grid w-full gap-4 p-4 text-left transition hover:bg-white/3 sm:grid-cols-[132px_minmax(0,1fr)_140px]"
+                    :class="isEventExpanded(event) ? 'bg-white/2' : ''"
+                    @click="toggleEvent(event)"
+                  >
+                    <span class="block">
+                      <span class="block text-sm font-black uppercase tracking-wide text-race-red">
+                        {{ formatEventDateRange(event) }}
+                      </span>
+                      <span class="mt-2 block text-xs text-zinc-500">
+                        Round {{ event.roundNumber }}
+                      </span>
+                    </span>
+
+                    <span class="block min-w-0">
+                      <span class="flex min-w-0 flex-wrap items-center gap-2">
+                        <span
+                          class="truncate text-xl font-black text-white"
+                          :title="formatEventTitle(event)"
+                        >
+                          {{ formatEventTitle(event) }}
+                        </span>
+                        <span
+                          v-if="isEventActive(event, now)"
+                          class="rounded bg-race-red px-2 py-1 text-xs font-bold uppercase text-white"
+                        >
+                          Live weekend
+                        </span>
+                      </span>
+                      <span class="mt-2 block text-sm text-zinc-400">
+                        {{ event.location }}
+                        <span class="text-zinc-600">/</span>
+                        {{ eventSessions(event).length }} sessions
+                      </span>
+                    </span>
+
+                    <span class="flex items-center justify-between gap-3 sm:justify-end">
+                      <span class="text-right">
+                        <span class="block text-sm font-semibold text-zinc-300">
+                          {{ eventNextSessionLabel(event) }}
+                        </span>
+                      </span>
+                      <span
+                        class="grid size-9 place-items-center rounded-md bg-white/5 text-lg text-white transition"
+                        :class="isEventExpanded(event) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
+                      >
+                        <ChevronDown :size="18" />
+                      </span>
+                    </span>
+                  </button>
+
+                  <div
+                    v-if="isEventExpanded(event)"
+                    class="border-t border-white/10 bg-black/10"
+                  >
+                    <div
+                      v-if="eventSessions(event).length"
+                      class="divide-y divide-white/10"
+                    >
+                      <article
+                        v-for="session in eventSessions(event)"
+                        :key="session['@id']"
+                        class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[112px_minmax(0,1fr)_150px]"
+                        :class="sessionRowClass(session)"
+                      >
+                        <div class="flex items-center gap-3 md:items-start">
+                          <div class="min-w-16">
+                            <div
+                              class="text-xs font-black uppercase tracking-wide"
+                              :class="isSessionCompleted(session) ? 'text-zinc-600' : 'text-race-red'"
+                            >
+                              {{ formatSessionWeekday(session) }}
+                            </div>
+                            <div
+                              class="mt-1 text-3xl font-black leading-none tabular-nums"
+                              :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                            >
+                              {{ formatSessionDay(session) }}
+                            </div>
+                            <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                              {{ formatSessionMonth(session) }}
+                            </div>
+                          </div>
+                          <div class="hidden h-12 w-px bg-white/10 md:block" />
+                          <div class="text-xs font-semibold uppercase tracking-wide text-race-red md:hidden">
+                            {{ formatSessionDateLong(session) }}
+                          </div>
+                        </div>
+
+                        <div class="min-w-0">
+                          <div class="flex flex-wrap items-center gap-2">
+                            <p
+                              class="text-base font-black"
+                              :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                            >
+                              {{ session.name }}
+                            </p>
+                            <span
+                              class="rounded px-2 py-1 text-xs font-bold uppercase"
+                              :class="sessionStatusBadgeClass(session)"
+                            >
+                              {{ sessionStatusLabel(session) }}
+                            </span>
+                          </div>
+                          <p
+                            v-if="isNextSession(session)"
+                            class="mt-2 text-sm font-semibold text-race-red"
+                          >
+                            Next session
+                          </p>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3 md:flex-col md:items-end md:justify-center">
+                          <div class="text-right">
+                            <p
+                              class="text-3xl font-black tabular-nums"
+                              :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                            >
+                              {{ formatSessionTime(session) }}
+                            </p>
+                            <p class="mt-1 text-sm text-zinc-500">
+                              {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
+                            </p>
+                          </div>
+                          <a
+                            :href="session.sourceUrl"
+                            target="_blank"
+                            rel="noreferrer"
+                            class="text-xs font-semibold text-zinc-500 transition hover:text-race-red"
+                            @click.stop
+                          >
+                            Official source
+                          </a>
+                        </div>
+                      </article>
+                    </div>
+
+                    <div
+                      v-else
+                      class="p-4 text-sm text-zinc-500"
+                    >
+                      No sessions match this filter.
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div
+                v-else
+                :key="`${selectedSeriesCode}-empty`"
+                class="grid min-h-80 place-items-center p-6 text-zinc-400"
+              >
+                No upcoming race weekend found.
+              </div>
+            </Transition>
+          </div>
+        </template>
       </section>
     </main>
   </div>
@@ -463,6 +533,7 @@ const availableSeries = [
 
 type SeriesCode = typeof availableSeries[number]['code']
 type TimeMode = 'local' | 'track'
+type SelectedView = 'weekend' | SeriesCategory
 type AvailableSeries = typeof availableSeries[number]
 type QuickLookItem = {
   series: AvailableSeries
@@ -470,6 +541,7 @@ type QuickLookItem = {
   session: ApiSession | null
 }
 
+const selectedView = ref<SelectedView>('weekend')
 const selectedSeriesCode = ref<SeriesCode>('F1')
 const selectedCategory = ref<SeriesCategory>('Formula')
 const selectedSeriesByCategory = reactive<Record<SeriesCategory, SeriesCode>>({
@@ -655,6 +727,7 @@ function openQuickLookItem(item: QuickLookItem): void {
 
   pendingExpandedEventId.value = item.event['@id']
   selectSeries(item.series.code)
+  selectedView.value = item.series.category
 
   if (!changesSeries) {
     expandedEventIds.value = new Set([item.event['@id']])
@@ -664,6 +737,15 @@ function openQuickLookItem(item: QuickLookItem): void {
       raceWeekendsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
   }
+}
+
+function selectWeekendView(): void {
+  selectedView.value = 'weekend'
+}
+
+function selectCategoryView(category: SeriesCategory): void {
+  selectedView.value = category
+  selectCategory(category)
 }
 
 function selectSeries(code: SeriesCode): void {
@@ -684,6 +766,24 @@ function selectCategory(category: SeriesCategory): void {
 
 function selectTimeMode(mode: TimeMode): void {
   timeMode.value = mode
+}
+
+function weekendStatusLabel(item: QuickLookItem): string {
+  if (!item.session) {
+    return 'Complete'
+  }
+
+  return isSessionLive(item.session, now.value) ? 'Live' : 'Next'
+}
+
+function weekendStatusBadgeClass(item: QuickLookItem): string {
+  if (!item.session) {
+    return 'bg-white/5 text-zinc-500'
+  }
+
+  return isSessionLive(item.session, now.value)
+    ? 'bg-race-red text-white shadow-lg shadow-race-red/20'
+    : 'bg-white/10 text-zinc-300'
 }
 
 function isEventActive(event: ApiEvent, date: Date): boolean {
