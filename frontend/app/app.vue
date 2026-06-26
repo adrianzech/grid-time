@@ -142,60 +142,127 @@
               key="weekend-list"
               class="divide-y divide-white/10"
             >
-              <button
+              <section
                 v-for="item in quickLookItems"
                 :key="`${item.series.code}-${item.event['@id']}`"
-                type="button"
-                class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-race-red sm:grid-cols-[92px_120px_minmax(0,1.2fr)_minmax(0,1fr)_112px] sm:items-center sm:p-4"
-                :class="item.session && isSessionLive(item.session, now) ? 'bg-race-red/5 hover:bg-race-red/10' : ''"
-                @click="openQuickLookItem(item)"
               >
-                <span class="col-start-1 row-start-1 flex items-center sm:col-auto sm:row-auto">
-                  <span
-                    class="inline-flex h-6 w-[68px] items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
-                    :class="weekendStatusBadgeClass(item)"
+                <button
+                  type="button"
+                  class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-race-red sm:grid-cols-[92px_120px_minmax(0,1.2fr)_minmax(0,1fr)_112px] sm:items-center sm:p-4"
+                  :class="item.session && isSessionLive(item.session, now) ? 'bg-race-red/5 hover:bg-race-red/10' : ''"
+                  :aria-expanded="isWeekendItemExpanded(item)"
+                  @click="toggleWeekendItem(item)"
+                >
+                  <span class="col-start-1 row-start-1 flex items-center sm:col-auto sm:row-auto">
+                    <span
+                      class="inline-flex h-6 w-[68px] items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
+                      :class="weekendStatusBadgeClass(item)"
+                    >
+                      {{ weekendStatusLabel(item) }}
+                    </span>
+                  </span>
+
+                  <span class="col-start-2 row-start-1 min-w-0 sm:order-first sm:col-auto sm:row-auto">
+                    <span class="block truncate text-sm font-black text-white">
+                      {{ item.series.name }}
+                    </span>
+                  </span>
+
+                  <span class="col-start-2 row-start-2 min-w-0 sm:col-auto sm:row-auto">
+                    <span
+                      class="block truncate text-base font-black text-white"
+                      :title="formatEventTitle(item.event)"
+                    >
+                      {{ formatEventTitle(item.event) }}
+                    </span>
+                    <span class="mt-1 block truncate text-sm text-zinc-500">
+                      {{ item.event.location }}
+                    </span>
+                  </span>
+
+                  <span class="col-start-2 row-start-3 min-w-0 sm:col-auto sm:row-auto">
+                    <span class="block truncate text-sm font-bold text-zinc-300">
+                      {{ item.session ? item.session.name : 'Weekend complete' }}
+                    </span>
+                    <span
+                      v-if="item.session"
+                      class="mt-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500"
+                    >
+                      {{ formatSessionDateLong(item.session) }}
+                    </span>
+                  </span>
+
+                  <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end gap-2 sm:col-auto sm:row-auto sm:row-span-1 sm:justify-end">
+                    <span class="text-2xl font-black tabular-nums text-white sm:text-right">
+                      {{ item.session ? formatSessionTime(item.session) : '—' }}
+                    </span>
+                    <ChevronDown
+                      :size="18"
+                      class="text-zinc-500 transition"
+                      :class="isWeekendItemExpanded(item) ? 'rotate-180 text-race-red' : ''"
+                    />
+                  </span>
+                </button>
+
+                <div
+                  v-if="isWeekendItemExpanded(item)"
+                  class="border-t border-white/10 bg-black/10"
+                >
+                  <div
+                    v-if="weekendItemSessions(item).length"
+                    class="divide-y divide-white/10"
                   >
-                    {{ weekendStatusLabel(item) }}
-                  </span>
-                </span>
+                    <article
+                      v-for="session in weekendItemSessions(item)"
+                      :key="session['@id']"
+                      class="grid gap-3 p-3 sm:grid-cols-[92px_minmax(0,1fr)_130px] sm:items-center sm:p-4"
+                      :class="sessionRowClass(session)"
+                    >
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="inline-flex h-6 w-[68px] items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
+                          :class="sessionStatusBadgeClass(session)"
+                        >
+                          {{ sessionStatusLabel(session) }}
+                        </span>
+                      </div>
 
-                <span class="col-start-2 row-start-1 min-w-0 sm:order-first sm:col-auto sm:row-auto">
-                  <span class="block truncate text-sm font-black text-white">
-                    {{ item.series.name }}
-                  </span>
-                </span>
+                      <div class="min-w-0">
+                        <p
+                          class="truncate text-sm font-black"
+                          :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
+                        >
+                          {{ session.name }}
+                        </p>
+                        <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                          {{ formatSessionDateLong(session) }}
+                        </p>
+                      </div>
 
-                <span class="col-start-2 row-start-2 min-w-0 sm:col-auto sm:row-auto">
-                  <span
-                    class="block truncate text-base font-black text-white"
-                    :title="formatEventTitle(item.event)"
+                      <div class="flex items-center justify-between gap-3 sm:justify-end">
+                        <div class="text-right">
+                          <p
+                            class="text-2xl font-black tabular-nums"
+                            :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
+                          >
+                            {{ formatSessionTime(session) }}
+                          </p>
+                          <p class="mt-1 text-xs text-zinc-500">
+                            {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
+                          </p>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+
+                  <div
+                    v-else
+                    class="p-4 text-sm text-zinc-500"
                   >
-                    {{ formatEventTitle(item.event) }}
-                  </span>
-                  <span class="mt-1 block truncate text-sm text-zinc-500">
-                    {{ item.event.location }}
-                  </span>
-                </span>
-
-                <span class="col-start-2 row-start-3 min-w-0 sm:col-auto sm:row-auto">
-                  <span class="block truncate text-sm font-bold text-zinc-300">
-                    {{ item.session ? item.session.name : 'Weekend complete' }}
-                  </span>
-                  <span
-                    v-if="item.session"
-                    class="mt-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500"
-                  >
-                    {{ formatSessionDateLong(item.session) }}
-                  </span>
-                </span>
-
-                <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end gap-2 sm:col-auto sm:row-auto sm:row-span-1 sm:justify-end">
-                  <span class="text-2xl font-black tabular-nums text-white sm:text-right">
-                    {{ item.session ? formatSessionTime(item.session) : '—' }}
-                  </span>
-                  <ChevronDown :size="18" class="-rotate-90 text-zinc-500" />
-                </span>
-              </button>
+                    No remaining sessions for this weekend.
+                  </div>
+                </div>
+              </section>
             </div>
 
             <div
@@ -484,9 +551,9 @@ import type { ApiEvent, ApiSession, ScheduleCacheEntry } from '~/composables/use
 
 const seasonYear = 2026
 const expandedEventIds = ref<Set<string>>(new Set())
+const expandedWeekendItemKey = ref<string | null>(null)
 const now = ref(new Date())
 const raceWeekendsSection = ref<HTMLElement | null>(null)
-const pendingExpandedEventId = ref<string | null>(null)
 let clock: ReturnType<typeof window.setInterval> | null = null
 
 const seriesCategories = ['Formula', 'Moto', 'Superbike'] as const
@@ -656,16 +723,6 @@ watch(selectedSeriesCode, () => {
   expandedEventIds.value = new Set()
   void scheduleCache.loadSeries(selectedSeriesCode.value)
   void nextTick(() => {
-    const eventId = pendingExpandedEventId.value
-
-    if (eventId) {
-      expandedEventIds.value = new Set([eventId])
-      pendingExpandedEventId.value = null
-      raceWeekendsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-
-      return
-    }
-
     expandFirstUpcomingEvent()
   })
 })
@@ -722,21 +779,29 @@ function toggleEvent(event: ApiEvent): void {
   expandedEventIds.value = nextExpandedEventIds
 }
 
-function openQuickLookItem(item: QuickLookItem): void {
-  const changesSeries = selectedSeriesCode.value !== item.series.code
+function weekendItemKey(item: QuickLookItem): string {
+  return `${item.series.code}-${item.event['@id']}`
+}
 
-  pendingExpandedEventId.value = item.event['@id']
-  selectSeries(item.series.code)
-  selectedView.value = item.series.category
+function isWeekendItemExpanded(item: QuickLookItem): boolean {
+  return expandedWeekendItemKey.value === weekendItemKey(item)
+}
 
-  if (!changesSeries) {
-    expandedEventIds.value = new Set([item.event['@id']])
-    pendingExpandedEventId.value = null
+function toggleWeekendItem(item: QuickLookItem): void {
+  const key = weekendItemKey(item)
+  expandedWeekendItemKey.value = expandedWeekendItemKey.value === key ? null : key
+}
 
-    void nextTick(() => {
-      raceWeekendsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }
+function weekendItemSessions(item: QuickLookItem): ApiSession[] {
+  const schedule = scheduleCache.cache.value[item.series.code] ?? emptySchedule
+
+  return schedule.sessions.filter((session) => {
+    if (session.event !== item.event['@id']) {
+      return false
+    }
+
+    return isSessionLive(session, now.value) || new Date(session.startsAt) > now.value
+  })
 }
 
 function selectWeekendView(): void {
