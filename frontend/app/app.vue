@@ -223,7 +223,7 @@
                     <article
                       v-for="session in weekendItemSessions(item)"
                       :key="session['@id']"
-                      class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[112px_minmax(0,1fr)_150px] md:items-center"
+                      class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[96px_minmax(0,1fr)_150px] md:items-center md:gap-x-1 md:gap-y-4"
                       :class="sessionRowClass(session)"
                     >
                       <div class="flex items-center gap-3 md:items-start">
@@ -251,19 +251,19 @@
                       </div>
 
                       <div class="flex min-w-0 items-center">
-                        <div class="flex flex-wrap items-center gap-2">
-                          <p
-                            class="text-xl font-black leading-tight sm:text-2xl"
-                            :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
-                          >
-                            {{ session.name }}
-                          </p>
+                        <div class="grid min-w-0 grid-cols-[92px_minmax(0,1fr)] items-center gap-5">
                           <span
-                            class="rounded px-2 py-1 text-xs font-bold uppercase"
+                            class="inline-flex h-7 w-[92px] items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
                             :class="sessionStatusBadgeClass(session)"
                           >
                             {{ sessionStatusLabel(session) }}
                           </span>
+                          <p
+                            class="truncate text-xl font-black leading-tight sm:text-2xl"
+                            :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
+                          >
+                            {{ session.name }}
+                          </p>
                         </div>
                       </div>
 
@@ -482,7 +482,7 @@
                       <article
                         v-for="session in eventSessions(event)"
                         :key="session['@id']"
-                        class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[112px_minmax(0,1fr)_150px] md:items-center"
+                        class="grid gap-4 border-l-2 p-4 transition md:grid-cols-[96px_minmax(0,1fr)_150px] md:items-center md:gap-x-1 md:gap-y-4"
                         :class="sessionRowClass(session)"
                       >
                         <div class="flex items-center gap-3 md:items-start">
@@ -510,19 +510,19 @@
                         </div>
 
                         <div class="flex min-w-0 items-center">
-                          <div class="flex flex-wrap items-center gap-2">
-                            <p
-                              class="text-xl font-black leading-tight sm:text-2xl"
-                              :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
-                            >
-                              {{ session.name }}
-                            </p>
+                          <div class="grid min-w-0 grid-cols-[92px_minmax(0,1fr)] items-center gap-5">
                             <span
-                              class="rounded px-2 py-1 text-xs font-bold uppercase"
+                              class="inline-flex h-7 w-[92px] items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
                               :class="sessionStatusBadgeClass(session)"
                             >
                               {{ sessionStatusLabel(session) }}
                             </span>
+                            <p
+                              class="truncate text-xl font-black leading-tight sm:text-2xl"
+                              :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                            >
+                              {{ session.name }}
+                            </p>
                           </div>
                         </div>
 
