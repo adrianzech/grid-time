@@ -41,7 +41,7 @@
                 v-for="series in visibleSeries"
                 :key="series.code"
                 type="button"
-                class="flex h-14 shrink-0 items-center rounded-lg border px-4 text-left transition sm:h-[77px] sm:flex-none"
+                class="flex h-14 shrink-0 items-center rounded-lg border px-4 text-left transition sm:h-19.25 sm:flex-none"
                 :class="series.code === selectedSeriesCode ? 'border-race-red bg-race-red text-white shadow-lg shadow-race-red/20' : 'border-white/10 bg-panel text-zinc-400 shadow-xl shadow-black/20 hover:border-white/25 hover:bg-panel-soft hover:text-white'"
                 :aria-pressed="series.code === selectedSeriesCode"
                 @click="selectSeries(series.code)"
@@ -148,7 +148,7 @@
               >
                 <button
                   type="button"
-                  class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-race-red sm:grid-cols-[88px_76px_minmax(180px,1fr)_minmax(120px,1fr)_118px_112px] sm:items-center sm:px-4 sm:py-3"
+                  class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-race-red sm:grid-cols-[88px_92px_minmax(180px,1fr)_minmax(120px,1fr)_118px_112px] sm:items-center sm:gap-x-4 sm:px-4 sm:py-3"
                   :class="item.session && isSessionLive(item.session, now) ? 'bg-race-red/5 hover:bg-race-red/10' : ''"
                   :aria-expanded="isWeekendItemExpanded(item)"
                   @click="toggleWeekendItem(item)"
@@ -161,7 +161,7 @@
 
                   <span class="col-start-1 row-start-2 flex items-center sm:col-start-2 sm:row-start-1">
                     <span
-                      class="inline-flex h-6 w-[68px] items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
+                      class="inline-flex h-7 w-23 items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
                       :class="weekendStatusBadgeClass(item)"
                     >
                       {{ weekendStatusLabel(item) }}
@@ -253,7 +253,7 @@
                       <div class="flex min-w-0 items-center">
                         <div class="grid min-w-0 grid-cols-[92px_minmax(0,1fr)] items-center gap-5">
                           <span
-                            class="inline-flex h-7 w-[92px] items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
+                            class="inline-flex h-7 w-23 items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
                             :class="sessionStatusBadgeClass(session)"
                           >
                             {{ sessionStatusLabel(session) }}
@@ -435,7 +435,7 @@
                     </span>
 
                     <span class="block min-w-0">
-                      <span class="flex min-w-0 flex-wrap items-center gap-2">
+                      <span class="flex min-w-0 flex-wrap items-center gap-4">
                         <span
                           class="truncate text-xl font-black text-white"
                           :title="formatEventTitle(event)"
@@ -444,7 +444,7 @@
                         </span>
                         <span
                           v-if="isEventActive(event, now)"
-                          class="rounded bg-race-red px-2 py-1 text-xs font-bold uppercase text-white"
+                          class="inline-flex h-7 w-28 items-center justify-center rounded bg-race-red px-2 text-[11px] font-bold uppercase whitespace-nowrap text-white"
                         >
                           Live weekend
                         </span>
@@ -512,7 +512,7 @@
                         <div class="flex min-w-0 items-center">
                           <div class="grid min-w-0 grid-cols-[92px_minmax(0,1fr)] items-center gap-5">
                             <span
-                              class="inline-flex h-7 w-[92px] items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
+                              class="inline-flex h-7 w-23 items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
                               :class="sessionStatusBadgeClass(session)"
                             >
                               {{ sessionStatusLabel(session) }}
