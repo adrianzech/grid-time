@@ -204,11 +204,12 @@
                     <span class="text-2xl font-black tabular-nums text-white sm:text-right">
                       {{ item.session ? formatSessionTime(item.session) : '—' }}
                     </span>
-                    <ChevronDown
-                      :size="18"
-                      class="text-zinc-500 transition"
-                      :class="isWeekendItemExpanded(item) ? 'rotate-180 text-race-red' : ''"
-                    />
+                    <span
+                      class="grid size-9 place-items-center rounded-md bg-white/5 text-lg text-white transition"
+                      :class="isWeekendItemExpanded(item) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
+                    >
+                      <ChevronDown :size="18" />
+                    </span>
                   </span>
                 </button>
 
