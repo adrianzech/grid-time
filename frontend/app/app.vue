@@ -9,44 +9,44 @@
             <span class="text-xs font-semibold uppercase tracking-[0.26em] text-race-red">Grid Time</span>
           </div>
 
-          <div class="max-w-5xl">
-            <div class="grid w-full grid-cols-2 gap-1 rounded-lg border border-white/10 bg-panel p-2 shadow-xl shadow-black/20 sm:inline-grid sm:w-auto sm:grid-cols-4">
+          <div class="max-w-5xl space-y-3">
+            <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
               <button
                 type="button"
-                class="min-h-11 rounded-md px-2 py-2 text-sm font-bold transition sm:px-4"
-                :class="selectedView === 'weekend' ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
+                class="h-10 shrink-0 rounded-lg border px-4 text-sm font-black transition"
+                :class="selectedView === 'weekend' ? 'border-race-red bg-race-red text-white shadow-lg shadow-race-red/20' : 'border-white/10 bg-panel text-zinc-400 hover:border-white/25 hover:bg-panel-soft hover:text-white'"
                 :aria-pressed="selectedView === 'weekend'"
                 @click="selectWeekendView"
               >
-                This weekend
+                Weekend
               </button>
               <button
                 v-for="category in seriesCategories"
                 :key="category"
                 type="button"
-                class="min-h-11 rounded-md px-2 py-2 text-sm font-bold transition sm:px-4"
-                :class="selectedView === category ? 'bg-race-red text-white shadow-lg shadow-race-red/20' : 'text-zinc-400 hover:bg-white/4'"
+                class="h-10 shrink-0 rounded-lg border px-4 text-sm font-black transition"
+                :class="selectedView === category ? 'border-race-red bg-race-red text-white shadow-lg shadow-race-red/20' : 'border-white/10 bg-panel text-zinc-400 hover:border-white/25 hover:bg-panel-soft hover:text-white'"
                 :aria-pressed="selectedView === category"
                 @click="selectCategoryView(category)"
               >
-                {{ category }}
+                {{ categoryLabel(category) }}
               </button>
             </div>
 
             <div
               v-if="selectedView !== 'weekend'"
-              class="-mx-4 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+              class="-mx-4 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
             >
               <button
                 v-for="series in visibleSeries"
                 :key="series.code"
                 type="button"
-                class="flex h-14 shrink-0 items-center rounded-lg border px-4 text-left transition sm:h-19.25 sm:flex-none"
-                :class="series.code === selectedSeriesCode ? 'border-race-red bg-race-red text-white shadow-lg shadow-race-red/20' : 'border-white/10 bg-panel text-zinc-400 shadow-xl shadow-black/20 hover:border-white/25 hover:bg-panel-soft hover:text-white'"
+                class="flex h-11 shrink-0 items-center rounded-lg border px-4 text-left transition sm:flex-none"
+                :class="series.code === selectedSeriesCode ? 'border-race-red bg-race-red text-white shadow-lg shadow-race-red/20' : 'border-white/10 bg-panel text-zinc-400 hover:border-white/25 hover:bg-panel-soft hover:text-white'"
                 :aria-pressed="series.code === selectedSeriesCode"
                 @click="selectSeries(series.code)"
               >
-                <span class="block text-base font-black sm:text-lg">
+                <span class="block text-sm font-black sm:text-base">
                   {{ series.name }}
                 </span>
               </button>
@@ -143,29 +143,31 @@
               <div
                 v-for="index in weekendSkeletonRows"
                 :key="index"
-                class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 sm:grid-cols-[88px_104px_minmax(180px,1fr)_minmax(120px,1fr)_118px_112px_40px] sm:items-center sm:gap-x-2 sm:px-4 sm:py-3"
+                class="grid w-full grid-cols-[minmax(0,1fr)_40px] gap-3 p-3 lg:grid-cols-[72px_80px_minmax(180px,1fr)_minmax(140px,1fr)_104px_112px_40px] lg:items-center lg:px-4 lg:py-3"
                 aria-hidden="true"
               >
-                <span class="col-start-1 row-start-1 flex items-center sm:col-start-1 sm:row-start-1">
-                  <span class="h-4 w-14 animate-pulse rounded bg-white/10" />
+                <span class="col-start-1 row-start-1 flex items-center gap-2 lg:col-start-1 lg:row-start-1">
+                  <span class="h-4 w-12 animate-pulse rounded bg-white/10" />
+                  <span class="h-6 w-16 animate-pulse rounded bg-white/10 lg:hidden" />
                 </span>
-                <span class="col-start-1 row-start-2 flex items-center sm:col-start-2 sm:row-start-1">
-                  <span class="h-7 w-23 animate-pulse rounded bg-white/10" />
+                <span class="col-start-1 row-start-2 min-w-0 lg:col-start-2 lg:row-start-1">
+                  <span class="block h-6 w-18 max-w-full animate-pulse rounded bg-white/10" />
                 </span>
-                <span class="col-start-2 row-start-1 min-w-0 sm:col-start-3 sm:row-start-1">
+                <span class="col-start-1 row-start-3 min-w-0 lg:col-start-3 lg:row-start-1">
                   <span class="block h-5 w-32 max-w-full animate-pulse rounded bg-white/10" />
                   <span class="mt-2 block h-4 w-28 max-w-full animate-pulse rounded bg-white/5" />
                 </span>
-                <span class="col-start-2 row-start-2 min-w-0 sm:col-start-4 sm:row-start-1">
+                <span class="col-start-1 row-start-4 min-w-0 lg:col-start-4 lg:row-start-1">
                   <span class="block h-4 w-24 max-w-full animate-pulse rounded bg-white/5" />
                 </span>
-                <span class="col-start-2 row-start-3 min-w-0 sm:col-start-5 sm:row-start-1">
+                <span class="col-start-1 row-start-5 min-w-0 lg:col-start-5 lg:row-start-1">
                   <span class="block h-4 w-20 max-w-full animate-pulse rounded bg-white/5" />
                 </span>
-                <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end sm:col-start-6 sm:row-span-1 sm:row-start-1">
+                <span class="col-start-1 row-start-6 flex items-center justify-between lg:col-start-6 lg:row-start-1 lg:justify-end">
+                  <span class="h-6 w-16 animate-pulse rounded bg-white/10 lg:hidden" />
                   <span class="h-7 w-14 animate-pulse rounded bg-white/10" />
                 </span>
-                <span class="hidden sm:flex sm:col-start-7 sm:row-start-1 sm:items-center sm:justify-end">
+                <span class="col-start-2 row-start-6 flex items-center justify-end lg:col-start-7 lg:row-start-1">
                   <span class="size-9 animate-pulse rounded-md bg-white/5" />
                 </span>
               </div>
@@ -182,29 +184,29 @@
               >
                 <button
                   type="button"
-                  class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-race-red sm:grid-cols-[88px_104px_minmax(180px,1fr)_minmax(120px,1fr)_118px_112px_40px] sm:items-center sm:gap-x-2 sm:px-4 sm:py-3"
+                  class="grid w-full grid-cols-[minmax(0,1fr)_40px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-race-red lg:grid-cols-[72px_80px_minmax(180px,1fr)_minmax(140px,1fr)_104px_112px_40px] lg:items-center lg:gap-x-3 lg:px-4 lg:py-3"
                   :class="item.session && isSessionLive(item.session, now) ? 'bg-race-red/5 hover:bg-race-red/10' : ''"
                   :aria-expanded="isWeekendItemExpanded(item)"
                   @click="toggleWeekendItem(item)"
                 >
-                  <span class="col-start-1 row-start-1 flex items-center sm:col-start-1 sm:row-start-1">
-                    <span class="block truncate text-sm font-black text-white">
+                  <span class="col-start-1 row-start-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 lg:col-start-1 lg:row-start-1">
+                    <span class="block shrink-0 text-sm font-black text-white">
                       {{ item.series.name }}
                     </span>
                   </span>
 
-                  <span class="col-start-1 row-start-2 flex items-center sm:col-start-2 sm:row-start-1">
+                  <span class="col-start-1 row-start-1 flex justify-end lg:col-start-2 lg:row-start-1 lg:justify-start">
                     <span
-                      class="inline-flex h-7 w-23 items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
+                      class="inline-flex h-6 w-18 shrink-0 items-center justify-center rounded px-2 text-[10px] font-bold uppercase"
                       :class="weekendStatusBadgeClass(item)"
                     >
                       {{ weekendStatusLabel(item) }}
                     </span>
                   </span>
 
-                  <span class="col-start-2 row-start-1 min-w-0 sm:col-start-3 sm:row-start-1">
+                  <span class="col-start-1 row-start-2 min-w-0 lg:col-start-3 lg:row-start-1">
                     <span
-                      class="block truncate text-base font-black text-white"
+                      class="block truncate text-lg font-black leading-tight text-white lg:text-base"
                       :title="formatEventTitle(item.event)"
                     >
                       {{ formatEventTitle(item.event) }}
@@ -216,40 +218,34 @@
 
                   <span
                     v-if="item.session"
-                    class="col-start-2 row-start-3 min-w-0 sm:col-start-5 sm:row-start-1"
+                    class="col-start-1 row-start-3 min-w-0 lg:col-start-5 lg:row-start-1"
                   >
-                    <span class="block truncate text-xs font-semibold text-zinc-500 sm:text-sm">
+                    <span class="block truncate text-xs font-semibold text-zinc-500">
                       {{ formatWeekendSessionDate(item.session) }}
                     </span>
                   </span>
 
                   <span
                     v-else
-                    class="col-start-2 row-start-3 min-w-0 sm:col-start-5 sm:row-start-1"
+                    class="col-start-1 row-start-3 min-w-0 lg:col-start-5 lg:row-start-1"
                   />
 
-                  <span class="col-start-2 row-start-2 min-w-0 sm:col-start-4 sm:row-start-1">
-                    <span class="block truncate text-sm font-bold text-zinc-300">
+                  <span class="col-start-1 row-start-4 min-w-0 lg:col-start-4 lg:row-start-1">
+                    <span class="block text-sm font-bold leading-snug text-zinc-300 lg:truncate">
                       {{ item.session ? item.session.name : 'Weekend complete' }}
                     </span>
                   </span>
 
-                  <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end gap-2 sm:col-start-6 sm:row-span-1 sm:row-start-1">
-                    <span class="text-2xl font-black tabular-nums text-white sm:min-w-24 sm:text-right">
+                  <span class="col-start-1 row-start-5 flex items-center justify-between gap-3 lg:col-start-6 lg:row-start-1 lg:justify-end">
+                    <span class="text-xs font-semibold text-zinc-600 lg:hidden">
+                      {{ item.session?.endsAt ? `until ${formatSessionTime(item.session, item.session.endsAt)}` : '' }}
+                    </span>
+                    <span class="text-2xl font-black tabular-nums text-white lg:min-w-24 lg:text-right">
                       {{ item.session ? formatSessionTime(item.session) : '—' }}
                     </span>
                   </span>
 
-                  <span class="hidden sm:flex sm:col-start-7 sm:row-start-1 sm:items-center sm:justify-end">
-                    <span
-                      class="grid size-9 shrink-0 place-items-center rounded-md bg-white/5 text-lg text-white transition"
-                      :class="isWeekendItemExpanded(item) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
-                    >
-                      <ChevronDown :size="18" />
-                    </span>
-                  </span>
-
-                  <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end sm:hidden">
+                  <span class="col-start-2 row-start-5 flex items-center justify-end lg:col-start-7 lg:row-start-1">
                     <span
                       class="grid size-9 shrink-0 place-items-center rounded-md bg-white/5 text-lg text-white transition"
                       :class="isWeekendItemExpanded(item) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
@@ -270,65 +266,63 @@
                     <article
                       v-for="session in weekendItemSessions(item)"
                       :key="session['@id']"
-                      class="grid gap-4 border-l-2 px-4 py-3 transition md:grid-cols-[96px_minmax(0,1fr)_112px_40px] md:items-center md:gap-x-2 md:gap-y-4"
+                      class="grid grid-cols-[64px_96px_minmax(0,1fr)] gap-3 border-l-2 px-4 py-3 transition sm:grid-cols-[72px_96px_minmax(0,1fr)_112px_40px] sm:items-center sm:gap-x-3"
                       :class="sessionRowClass(session)"
                     >
-                      <div class="flex items-center gap-3 md:items-start">
-                        <div class="min-w-16">
-                          <div
-                            class="text-xs font-black uppercase tracking-wide"
-                            :class="isSessionCompleted(session, now) ? 'text-zinc-600' : 'text-race-red'"
-                          >
-                            {{ formatSessionWeekday(session) }}
-                          </div>
-                          <div
-                            class="mt-1 text-3xl font-black leading-none tabular-nums"
-                            :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
-                          >
-                            {{ formatSessionDay(session) }}
-                          </div>
-                          <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
-                            {{ formatSessionMonth(session) }}
-                          </div>
+                      <div class="row-span-2 min-w-16">
+                        <div
+                          class="text-xs font-black uppercase tracking-wide"
+                          :class="isSessionCompleted(session, now) ? 'text-zinc-600' : 'text-race-red'"
+                        >
+                          {{ formatSessionWeekday(session) }}
                         </div>
-                        <div class="hidden h-10 w-px bg-white/10 md:block" />
-                        <div class="text-xs font-semibold text-zinc-500 md:hidden">
-                          {{ formatWeekendSessionDate(session) }}
+                        <div
+                          class="mt-1 text-3xl font-black leading-none tabular-nums"
+                          :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
+                        >
+                          {{ formatSessionDay(session) }}
+                        </div>
+                        <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                          {{ formatSessionMonth(session) }}
                         </div>
                       </div>
 
-                      <div class="flex min-w-0 items-center">
-                        <div class="grid min-w-0 grid-cols-[92px_minmax(0,1fr)] items-center gap-5">
-                          <span
-                            class="inline-flex h-7 w-23 items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
-                            :class="sessionStatusBadgeClass(session)"
-                          >
-                            {{ sessionStatusLabel(session) }}
-                          </span>
-                          <p
-                            class="truncate text-xl font-black leading-tight sm:text-2xl"
-                            :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
-                          >
-                            {{ session.name }}
-                          </p>
-                        </div>
+                      <div class="col-start-2 row-start-1 flex min-w-0 items-center">
+                        <span
+                          class="inline-flex h-6 w-24 shrink-0 items-center justify-center rounded px-2 text-[10px] font-bold uppercase"
+                          :class="sessionStatusBadgeClass(session)"
+                        >
+                          {{ sessionStatusLabel(session) }}
+                        </span>
                       </div>
 
-                      <div class="flex items-center justify-end">
-                        <div class="relative min-w-24 text-right">
+                      <div class="col-start-3 row-start-1 min-w-0">
+                        <p
+                          class="min-w-0 text-xl font-black leading-tight sm:text-2xl"
+                          :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
+                        >
+                          {{ session.name }}
+                        </p>
+                      </div>
+
+                      <div class="col-start-3 flex items-end justify-between gap-3 sm:col-start-4 sm:row-start-1 sm:block sm:text-right">
+                        <p class="text-xs font-semibold text-zinc-500 sm:hidden">
+                          {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
+                        </p>
+                        <div>
                           <p
                             class="text-2xl font-black tabular-nums"
                             :class="isSessionCompleted(session, now) ? 'text-zinc-500' : 'text-white'"
                           >
                             {{ formatSessionTime(session) }}
                           </p>
-                          <p class="absolute right-0 top-full mt-0.5 text-xs text-zinc-500">
+                          <p class="mt-0.5 hidden text-xs text-zinc-500 sm:block">
                             {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
                           </p>
                         </div>
                       </div>
 
-                      <div class="flex items-center justify-end">
+                      <div class="col-start-3 flex items-center justify-end sm:col-start-5 sm:row-start-1">
                         <a
                           :href="session.sourceUrl"
                           target="_blank"
@@ -481,23 +475,23 @@
                 >
                   <button
                     type="button"
-                    class="grid w-full gap-4 p-4 text-left transition hover:bg-white/3 sm:grid-cols-[108px_minmax(0,1fr)_140px]"
+                    class="grid w-full grid-cols-[minmax(0,1fr)_40px] gap-3 p-4 text-left transition hover:bg-white/3 sm:grid-cols-[108px_minmax(0,1fr)_180px_40px] sm:items-center sm:gap-x-3"
                     :class="isEventExpanded(event) ? 'bg-white/2' : ''"
                     @click="toggleEvent(event)"
                   >
-                    <span class="block">
-                      <span class="block text-sm font-black uppercase tracking-wide text-race-red">
+                    <span class="col-start-1 row-start-1 block sm:col-start-1">
+                      <span class="block text-sm font-black uppercase tracking-wide text-race-red sm:text-xs">
                         {{ formatEventDateRange(event) }}
                       </span>
-                      <span class="mt-2 block text-xs text-zinc-500">
+                      <span class="mt-1 block text-xs text-zinc-500">
                         Round {{ event.roundNumber }}
                       </span>
                     </span>
 
-                    <span class="block min-w-0">
-                      <span class="flex min-w-0 flex-wrap items-center gap-4">
+                    <span class="col-start-1 row-start-2 block min-w-0 sm:col-start-2 sm:row-start-1">
+                      <span class="flex min-w-0 flex-wrap items-center gap-2">
                         <span
-                          class="truncate text-xl font-black text-white"
+                          class="min-w-0 text-xl font-black leading-tight text-white sm:truncate"
                           :title="formatEventTitle(event)"
                         >
                           {{ formatEventTitle(event) }}
@@ -516,12 +510,15 @@
                       </span>
                     </span>
 
-                    <span class="flex items-center justify-between gap-3 sm:justify-end">
-                      <span class="text-right">
-                        <span class="block text-sm font-semibold text-zinc-300">
+                    <span class="col-start-1 row-start-3 flex items-center justify-between gap-3 sm:col-start-3 sm:row-start-1 sm:justify-end">
+                      <span class="min-w-0 sm:text-right">
+                        <span class="block truncate text-sm font-semibold text-zinc-300">
                           {{ eventNextSessionLabel(event) }}
                         </span>
                       </span>
+                    </span>
+
+                    <span class="col-start-2 row-span-3 row-start-1 flex items-start justify-end sm:col-start-4 sm:row-span-1 sm:row-start-1 sm:items-center">
                       <span
                         class="grid size-9 shrink-0 place-items-center rounded-md bg-white/5 text-lg text-white transition"
                         :class="isEventExpanded(event) ? 'rotate-180 bg-race-red/20 text-race-red' : ''"
@@ -542,65 +539,63 @@
                       <article
                         v-for="session in eventSessions(event)"
                         :key="session['@id']"
-                        class="grid gap-4 border-l-2 px-4 py-3 transition md:grid-cols-[96px_minmax(0,1fr)_112px_40px] md:items-center md:gap-x-2 md:gap-y-4"
+                        class="grid grid-cols-[64px_96px_minmax(0,1fr)] gap-3 border-l-2 px-4 py-3 transition sm:grid-cols-[72px_96px_minmax(0,1fr)_112px_40px] sm:items-center sm:gap-x-3"
                         :class="sessionRowClass(session)"
                       >
-                        <div class="flex items-center gap-3 md:items-start">
-                          <div class="min-w-16">
-                            <div
-                              class="text-xs font-black uppercase tracking-wide"
-                              :class="isSessionCompleted(session) ? 'text-zinc-600' : 'text-race-red'"
-                            >
-                              {{ formatSessionWeekday(session) }}
-                            </div>
-                            <div
-                              class="mt-1 text-3xl font-black leading-none tabular-nums"
-                              :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
-                            >
-                              {{ formatSessionDay(session) }}
-                            </div>
-                            <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
-                              {{ formatSessionMonth(session) }}
-                            </div>
+                        <div class="row-span-2 min-w-16">
+                          <div
+                            class="text-xs font-black uppercase tracking-wide"
+                            :class="isSessionCompleted(session) ? 'text-zinc-600' : 'text-race-red'"
+                          >
+                            {{ formatSessionWeekday(session) }}
                           </div>
-                          <div class="hidden h-10 w-px bg-white/10 md:block" />
-                          <div class="text-xs font-semibold uppercase tracking-wide text-race-red md:hidden">
-                            {{ formatSessionDateLong(session) }}
+                          <div
+                            class="mt-1 text-3xl font-black leading-none tabular-nums"
+                            :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                          >
+                            {{ formatSessionDay(session) }}
+                          </div>
+                          <div class="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                            {{ formatSessionMonth(session) }}
                           </div>
                         </div>
 
-                        <div class="flex min-w-0 items-center">
-                          <div class="grid min-w-0 grid-cols-[92px_minmax(0,1fr)] items-center gap-5">
-                            <span
-                              class="inline-flex h-7 w-23 items-center justify-center rounded px-2 text-[11px] font-bold uppercase"
-                              :class="sessionStatusBadgeClass(session)"
-                            >
-                              {{ sessionStatusLabel(session) }}
-                            </span>
-                            <p
-                              class="truncate text-xl font-black leading-tight sm:text-2xl"
-                              :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
-                            >
-                              {{ session.name }}
-                            </p>
-                          </div>
+                        <div class="col-start-2 row-start-1 flex min-w-0 items-center">
+                          <span
+                            class="inline-flex h-6 w-24 shrink-0 items-center justify-center rounded px-2 text-[10px] font-bold uppercase"
+                            :class="sessionStatusBadgeClass(session)"
+                          >
+                            {{ sessionStatusLabel(session) }}
+                          </span>
                         </div>
 
-                        <div class="flex items-center justify-end">
-                          <div class="relative min-w-24 text-right">
+                        <div class="col-start-3 row-start-1 min-w-0">
+                          <p
+                            class="min-w-0 text-xl font-black leading-tight sm:text-2xl"
+                            :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
+                          >
+                            {{ session.name }}
+                          </p>
+                        </div>
+
+                        <div class="col-start-3 flex items-end justify-between gap-3 sm:col-start-4 sm:row-start-1 sm:block sm:text-right">
+                          <p class="text-xs font-semibold text-zinc-500 sm:hidden">
+                            {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
+                          </p>
+                          <div>
                             <p
                               class="text-2xl font-black tabular-nums"
                               :class="isSessionCompleted(session) ? 'text-zinc-500' : 'text-white'"
                             >
                               {{ formatSessionTime(session) }}
                             </p>
-                            <p class="absolute right-0 top-full mt-0.5 text-xs text-zinc-500">
+                            <p class="mt-0.5 hidden text-xs text-zinc-500 sm:block">
                               {{ session.endsAt ? `until ${formatSessionTime(session, session.endsAt)}` : '' }}
                             </p>
                           </div>
                         </div>
 
-                        <div class="flex items-center justify-end">
+                        <div class="col-start-3 flex items-center justify-end sm:col-start-5 sm:row-start-1">
                           <a
                             :href="session.sourceUrl"
                             target="_blank"
@@ -740,6 +735,12 @@ const timeModes = [
     label: 'Track Time',
   },
 ] as const
+
+const categoryLabels: Record<SeriesCategory, string> = {
+  Formula: 'Formula',
+  Moto: 'Moto',
+  Superbike: 'SBK',
+}
 
 const activeSchedule = computed<ScheduleCacheEntry>(() => scheduleCache.cache.value[selectedSeriesCode.value] ?? emptySchedule)
 const hasScheduleData = computed(() => activeSchedule.value.events.length > 0 || activeSchedule.value.sessions.length > 0)
@@ -972,6 +973,10 @@ function selectCategory(category: SeriesCategory): void {
 
 function selectTimeMode(mode: TimeMode): void {
   timeMode.value = mode
+}
+
+function categoryLabel(category: SeriesCategory): string {
+  return categoryLabels[category]
 }
 
 function weekendStatusLabel(item: QuickLookItem): string {
