@@ -148,7 +148,7 @@
               >
                 <button
                   type="button"
-                  class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-race-red sm:grid-cols-[88px_92px_minmax(180px,1fr)_minmax(120px,1fr)_118px_112px_40px] sm:items-center sm:gap-x-2 sm:px-4 sm:py-3"
+                  class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 text-left transition hover:bg-white/3 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-race-red sm:grid-cols-[88px_104px_minmax(180px,1fr)_minmax(120px,1fr)_118px_112px_40px] sm:items-center sm:gap-x-2 sm:px-4 sm:py-3"
                   :class="item.session && isSessionLive(item.session, now) ? 'bg-race-red/5 hover:bg-race-red/10' : ''"
                   :aria-expanded="isWeekendItemExpanded(item)"
                   @click="toggleWeekendItem(item)"
