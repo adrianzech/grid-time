@@ -26,7 +26,7 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        - { path: ^/api/(series|seasons|events|sessions), roles: ROLE_SCHEDULE_READ }
+        - { path: ^/api/(series|seasons|events|sessions|weekend-overview), roles: ROLE_SCHEDULE_READ }
 
 when@test:
     security:

@@ -32,7 +32,7 @@ final class ApiKeyAuthenticator extends AbstractAuthenticator
 
     public function supports(Request $request): bool
     {
-        return preg_match('#^/api/(series|seasons|events|sessions)(?:/|\.|$)#', $request->getPathInfo()) === 1;
+        return preg_match('#^/api/(series|seasons|events|sessions|weekend-overview)(?:/|\.|$)#', $request->getPathInfo()) === 1;
     }
 
     public function authenticate(Request $request): Passport
