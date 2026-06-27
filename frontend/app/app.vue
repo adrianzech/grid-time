@@ -439,7 +439,7 @@
                 >
                   <button
                     type="button"
-                    class="grid w-full gap-4 p-4 text-left transition hover:bg-white/3 sm:grid-cols-[132px_minmax(0,1fr)_140px]"
+                    class="grid w-full gap-4 p-4 text-left transition hover:bg-white/3 sm:grid-cols-[108px_minmax(0,1fr)_140px]"
                     :class="isEventExpanded(event) ? 'bg-white/2' : ''"
                     @click="toggleEvent(event)"
                   >
