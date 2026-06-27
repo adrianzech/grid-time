@@ -1,18 +1,22 @@
 import { createError, getQuery, getRouterParam, setHeader } from 'h3'
 
 const allowedQueryKeys: Record<string, readonly string[]> = {
-  series: ['code', 'order[name]', 'page', 'itemsPerPage'],
-  seasons: ['series.code', 'year', 'order[year]', 'page', 'itemsPerPage'],
-  events: ['season.series.code', 'season.year', 'order[roundNumber]', 'page', 'itemsPerPage'],
-  sessions: ['event.season.series.code', 'event.season.year', 'order[startsAt]', 'page', 'itemsPerPage'],
+  'series': ['code', 'order[name]', 'page', 'itemsPerPage'],
+  'seasons': ['series.code', 'year', 'order[year]', 'page', 'itemsPerPage'],
+  'events': ['season.series.code', 'season.year', 'order[roundNumber]', 'page', 'itemsPerPage'],
+  'sessions': ['event.season.series.code', 'event.season.year', 'order[startsAt]', 'page', 'itemsPerPage'],
+  'weekend-overview': ['year', 'windowStart', 'windowEnd'],
 }
 
+// noinspection JSUnusedGlobalSymbols -- Nuxt discovers server routes through default exports.
 export default defineEventHandler(async (event) => {
   const resource = getRouterParam(event, 'resource')
 
   if (!resource || !(resource in allowedQueryKeys)) {
     throw createError({ statusCode: 404, statusMessage: 'Schedule resource not found.' })
   }
+
+  const resourceAllowedQueryKeys = allowedQueryKeys[resource]!
 
   const config = useRuntimeConfig(event)
 
@@ -22,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event)
   const allowedQuery = Object.fromEntries(
-    Object.entries(query).filter(([key, value]) => allowedQueryKeys[resource].includes(key) && typeof value === 'string'),
+    Object.entries(query).filter(([key, value]) => resourceAllowedQueryKeys.includes(key) && typeof value === 'string'),
   )
 
   try {

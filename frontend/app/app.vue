@@ -102,6 +102,12 @@
                 </h2>
                 <p class="text-sm text-zinc-500">
                   Current weekend across all racing series
+                  <span
+                    v-if="isWeekendRefreshing"
+                    class="ml-2 text-race-red"
+                  >
+                    Updating...
+                  </span>
                 </p>
               </div>
 
@@ -130,11 +136,39 @@
             leave-to-class="opacity-0 translate-y-1"
           >
             <div
-              v-if="!isQuickLookReady && !quickLookItems.length"
+              v-if="isWeekendLoading && !quickLookItems.length"
               key="weekend-loading"
-              class="grid min-h-56 place-items-center p-6 text-zinc-400"
+              class="divide-y divide-white/10"
             >
-              Loading weekend schedule...
+              <div
+                v-for="index in weekendSkeletonRows"
+                :key="index"
+                class="grid w-full grid-cols-[72px_minmax(0,1fr)_80px] gap-3 p-3 sm:grid-cols-[88px_104px_minmax(180px,1fr)_minmax(120px,1fr)_118px_112px_40px] sm:items-center sm:gap-x-2 sm:px-4 sm:py-3"
+                aria-hidden="true"
+              >
+                <span class="col-start-1 row-start-1 flex items-center sm:col-start-1 sm:row-start-1">
+                  <span class="h-4 w-14 animate-pulse rounded bg-white/10" />
+                </span>
+                <span class="col-start-1 row-start-2 flex items-center sm:col-start-2 sm:row-start-1">
+                  <span class="h-7 w-23 animate-pulse rounded bg-white/10" />
+                </span>
+                <span class="col-start-2 row-start-1 min-w-0 sm:col-start-3 sm:row-start-1">
+                  <span class="block h-5 w-32 max-w-full animate-pulse rounded bg-white/10" />
+                  <span class="mt-2 block h-4 w-28 max-w-full animate-pulse rounded bg-white/5" />
+                </span>
+                <span class="col-start-2 row-start-2 min-w-0 sm:col-start-4 sm:row-start-1">
+                  <span class="block h-4 w-24 max-w-full animate-pulse rounded bg-white/5" />
+                </span>
+                <span class="col-start-2 row-start-3 min-w-0 sm:col-start-5 sm:row-start-1">
+                  <span class="block h-4 w-20 max-w-full animate-pulse rounded bg-white/5" />
+                </span>
+                <span class="col-start-3 row-span-3 row-start-1 flex items-center justify-end sm:col-start-6 sm:row-span-1 sm:row-start-1">
+                  <span class="h-7 w-14 animate-pulse rounded bg-white/10" />
+                </span>
+                <span class="hidden sm:flex sm:col-start-7 sm:row-start-1 sm:items-center sm:justify-end">
+                  <span class="size-9 animate-pulse rounded-md bg-white/5" />
+                </span>
+              </div>
             </div>
 
             <div
@@ -318,6 +352,14 @@
                   </div>
                 </div>
               </section>
+            </div>
+
+            <div
+              v-else-if="weekendErrorMessage"
+              key="weekend-error"
+              class="m-4 rounded-lg border border-race-red/40 bg-race-red/10 p-4 text-sm text-red-100"
+            >
+              {{ weekendErrorMessage }}
             </div>
 
             <div
@@ -601,13 +643,16 @@
 
 <script setup lang="ts">
 import { ChevronDown, ExternalLink } from 'lucide-vue-next'
-import type { ApiEvent, ApiSession, ScheduleCacheEntry } from '~/composables/useScheduleCache'
+import type { ApiEvent, ApiSession, ApiWeekendOverviewItem, ApiWeekendOverviewSession, ScheduleCacheEntry } from '~/composables/useScheduleCache'
 
 const seasonYear = 2026
 const expandedEventIds = ref<Set<string>>(new Set())
 const expandedWeekendItemKey = ref<string | null>(null)
 const now = ref(new Date())
 const raceWeekendsSection = ref<HTMLElement | null>(null)
+const weekendOverviewItems = ref<ApiWeekendOverviewItem[]>([])
+const weekendStatus = ref<'idle' | 'loading' | 'refreshing' | 'ready' | 'error'>('idle')
+const weekendError = ref('')
 let clock: ReturnType<typeof window.setInterval> | null = null
 
 const seriesCategories = ['Formula', 'Moto', 'Superbike'] as const
@@ -655,11 +700,14 @@ const availableSeries = [
 type SeriesCode = typeof availableSeries[number]['code']
 type TimeMode = 'local' | 'track'
 type SelectedView = 'weekend' | SeriesCategory
-type AvailableSeries = typeof availableSeries[number]
 type QuickLookItem = {
-  series: AvailableSeries
+  series: {
+    code: string
+    name: string
+  }
   event: ApiEvent
   session: ApiSession | null
+  sessions: ApiSession[]
 }
 
 const selectedView = ref<SelectedView>('weekend')
@@ -712,20 +760,23 @@ const sessionsByEvent = computed(() => {
   return grouped
 })
 const weekendWindow = computed(() => getWeekendWindow(now.value))
-const quickLookItems = computed<QuickLookItem[]>(() => availableSeries.flatMap((series) => {
-  const schedule = scheduleCache.cache.value[series.code] ?? emptySchedule
-  const event = schedule.events.find((candidate) => eventOverlapsWindow(candidate, schedule.sessions, weekendWindow.value))
-
-  if (!event) {
-    return []
-  }
-
-  const eventSessions = schedule.sessions.filter((session) => session.event === event['@id'])
+const weekendSkeletonRows = 7
+const isWeekendLoading = computed(() => weekendStatus.value === 'loading')
+const isWeekendRefreshing = computed(() => weekendStatus.value === 'refreshing')
+const weekendErrorMessage = computed(() => weekendOverviewItems.value.length ? '' : weekendError.value)
+const quickLookItems = computed<QuickLookItem[]>(() => weekendOverviewItems.value.map((item) => {
+  const event = mapWeekendEvent(item)
+  const eventSessions = item.sessions.map(mapWeekendSession)
   const session = eventSessions.find((candidate) => isSessionLive(candidate, now.value))
     ?? eventSessions.find((candidate) => new Date(candidate.startsAt) > now.value)
     ?? null
 
-  return [{ series, event, session }]
+  return {
+    series: item.series,
+    event,
+    session,
+    sessions: eventSessions,
+  }
 }).sort((left, right) => {
   if (left.session && right.session) {
     return new Date(left.session.startsAt).getTime() - new Date(right.session.startsAt).getTime()
@@ -741,11 +792,6 @@ const quickLookItems = computed<QuickLookItem[]>(() => availableSeries.flatMap((
   }
 
   return left.series.code.localeCompare(right.series.code)
-}))
-const isQuickLookReady = computed(() => availableSeries.every((series) => {
-  const status = scheduleCache.cache.value[series.code]?.status
-
-  return status === 'ready' || status === 'error'
 }))
 
 const selectedEvent = computed(() => {
@@ -782,27 +828,70 @@ watch(selectedSeriesCode, () => {
 })
 
 onMounted(() => {
+  void loadWeekendOverview()
   void scheduleCache.initialize()
-  window.addEventListener('focus', refreshSelectedSeries)
+  window.addEventListener('focus', refreshSchedules)
   clock = window.setInterval(() => {
     now.value = new Date()
   }, 60_000)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('focus', refreshSelectedSeries)
+  window.removeEventListener('focus', refreshSchedules)
 
   if (clock !== null) {
     window.clearInterval(clock)
   }
 })
 
-function refreshSelectedSeries(): void {
+function refreshSchedules(): void {
+  void loadWeekendOverview()
   void scheduleCache.loadSeries(selectedSeriesCode.value)
+}
+
+async function loadWeekendOverview(): Promise<void> {
+  const hasWeekendData = weekendOverviewItems.value.length > 0
+
+  weekendStatus.value = hasWeekendData ? 'refreshing' : 'loading'
+  weekendError.value = ''
+
+  try {
+    const window = weekendWindow.value
+    weekendOverviewItems.value = await scheduleCache.fetchWeekendOverview(seasonYear, window.start, window.end)
+    weekendStatus.value = 'ready'
+  } catch (error) {
+    weekendStatus.value = hasWeekendData ? 'ready' : 'error'
+    weekendError.value = error instanceof Error ? error.message : 'Could not load weekend schedule.'
+  }
 }
 
 function getEvent(session: ApiSession): ApiEvent | undefined {
   return eventByIri.value.get(session.event)
+}
+
+function mapWeekendEvent(item: ApiWeekendOverviewItem): ApiEvent {
+  return {
+    '@id': item.event.id,
+    'id': item.event.databaseId,
+    'roundNumber': item.event.roundNumber,
+    'name': item.event.name,
+    'countryName': item.event.countryName,
+    'location': item.event.location,
+    'sourceUrl': item.event.sourceUrl,
+  }
+}
+
+function mapWeekendSession(session: ApiWeekendOverviewSession): ApiSession {
+  return {
+    '@id': session.id,
+    'id': session.databaseId,
+    'event': session.event,
+    'name': session.name,
+    'startsAt': session.startsAt,
+    'endsAt': session.endsAt,
+    'sourceUrl': session.sourceUrl,
+    'trackTimezoneOffset': session.trackTimezoneOffset,
+  }
 }
 
 function eventSessions(event: ApiEvent): ApiSession[] {
@@ -847,19 +936,17 @@ function toggleWeekendItem(item: QuickLookItem): void {
 }
 
 function weekendItemSessions(item: QuickLookItem): ApiSession[] {
-  const schedule = scheduleCache.cache.value[item.series.code] ?? emptySchedule
-
-  return schedule.sessions.filter((session) => {
-    if (session.event !== item.event['@id']) {
-      return false
-    }
-
+  return item.sessions.filter((session) => {
     return isSessionLive(session, now.value) || new Date(session.startsAt) > now.value
   })
 }
 
 function selectWeekendView(): void {
   selectedView.value = 'weekend'
+
+  if (weekendStatus.value === 'idle' || weekendStatus.value === 'error') {
+    void loadWeekendOverview()
+  }
 }
 
 function selectCategoryView(category: SeriesCategory): void {
@@ -957,19 +1044,6 @@ function getWeekendWindow(date: Date): { start: Date, end: Date } {
   end.setDate(end.getDate() + 2)
 
   return { start, end }
-}
-
-function eventOverlapsWindow(event: ApiEvent, sessions: ApiSession[], window: { start: Date, end: Date }): boolean {
-  return sessions.some((session) => {
-    if (session.event !== event['@id']) {
-      return false
-    }
-
-    const sessionStart = new Date(session.startsAt)
-    const sessionEnd = sessionEndDate(session)
-
-    return sessionStart <= window.end && sessionEnd >= window.start
-  })
 }
 
 function formatSessionDay(session: ApiSession): string {
