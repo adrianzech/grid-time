@@ -367,21 +367,26 @@
         </section>
 
         <template v-else>
-          <section class="mb-4 rounded-lg border border-race-red/25 bg-race-red/10 p-4 shadow-2xl shadow-race-red/10 sm:p-5">
+          <section class="mb-4 rounded-lg border border-race-red/25 bg-race-red/10 p-4 shadow-2xl shadow-race-red/10 sm:p-5 lg:py-4">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div class="min-w-0">
                 <p class="text-xs font-bold uppercase tracking-[0.22em] text-race-red">
                   Next up
                 </p>
-                <h2
-                  class="mt-3 max-w-3xl text-2xl font-black text-white sm:text-3xl"
-                  :title="nextSessionEvent?.name"
-                >
-                  {{ nextSessionEvent ? formatEventTitle(nextSessionEvent) : 'No upcoming session' }}
-                </h2>
-                <p class="mt-3 text-xl font-black text-white sm:text-2xl">
-                  {{ nextSession?.name ?? 'Schedule unavailable' }}
-                </p>
+                <div class="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-3 sm:gap-y-1">
+                  <h2
+                    class="max-w-3xl text-2xl font-black leading-tight text-white sm:text-3xl"
+                    :title="nextSessionEvent?.name"
+                  >
+                    {{ nextSessionEvent ? formatEventTitle(nextSessionEvent) : 'No upcoming session' }}
+                  </h2>
+                  <span class="hidden text-2xl font-black text-race-red sm:inline">
+                    /
+                  </span>
+                  <p class="text-2xl font-black leading-tight text-white sm:text-3xl">
+                    {{ nextSession?.name ?? 'Schedule unavailable' }}
+                  </p>
+                </div>
               </div>
 
               <div class="lg:min-w-64 lg:text-right">
